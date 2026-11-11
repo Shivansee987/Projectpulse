@@ -2,41 +2,43 @@ import { Link } from "react-router-dom";
 
 function Sidebar() {
   return (
-    <div className="w-64 min-h-screen bg-slate-900 text-white">
-      <div className="p-6 text-2xl font-bold border-b border-slate-700">
-        ProjectPulse
+    <aside className="w-64 bg-slate-900 text-white min-h-screen">
+      <div className="p-6 border-b border-slate-700">
+        <h1 className="text-3xl font-bold">
+          ProjectPulse
+        </h1>
       </div>
 
-      <div className="flex flex-col p-4 gap-2">
+      <nav className="p-4 space-y-2">
         <Link
-          className="p-3 rounded-lg hover:bg-slate-800"
           to="/"
+          className="block px-4 py-3 rounded-lg hover:bg-slate-800 transition"
         >
           Dashboard
         </Link>
 
         <Link
-          className="p-3 rounded-lg hover:bg-slate-800"
           to="/projects"
+          className="block px-4 py-3 rounded-lg hover:bg-slate-800 transition"
         >
           Projects
         </Link>
 
         <Link
-          className="p-3 rounded-lg hover:bg-slate-800"
           to="/tasks"
+          className="block px-4 py-3 rounded-lg hover:bg-slate-800 transition"
         >
           Tasks
         </Link>
 
         <Link
-          className="p-3 rounded-lg hover:bg-slate-800"
           to="/analytics"
+          className="block px-4 py-3 rounded-lg hover:bg-slate-800 transition"
         >
           Analytics
         </Link>
-      </div>
-    </div>
+      </nav>
+    </aside>
   );
 }
 
