@@ -35,15 +35,52 @@ model Project {
 }
 
 model Task {
-  id       String @id @default(uuid())
-  title    String
-  duration Int
-  status   String
+  id           String   @id @default(uuid())
+  title        String
+  duration     Int
+  status       String
 
-  assignee String?
+  assignee     String?
+
+  earliestStart Int?
+  latestStart   Int?
+  slack         Int?
 
   projectId String
   project   Project @relation(fields: [projectId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  dependencies Dependency[] @relation("TaskDependencies")
+  dependents   Dependency[] @relation("TaskDependents")
+}
+
+model Dependency {
+  id String @id @default(uuid())
+
+  taskId String
+  dependsOnTaskId String
+
+  task Task @relation(
+    "TaskDependencies",
+    fields: [taskId],
+    references: [id]
+  )
+
+  dependsOn Task @relation(
+    "TaskDependents",
+    fields: [dependsOnTaskId],
+    references: [id]
+  )
+}
+
+model Simulation {
+  id String @id @default(uuid())
+
+  taskId String
+
+  originalDuration Int
+  simulatedDuration Int
 
   createdAt DateTime @default(now())
 }
