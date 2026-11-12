@@ -1,3 +1,4 @@
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -35,12 +36,11 @@ model Project {
 }
 
 model Task {
-  id           String   @id @default(uuid())
-  title        String
-  duration     Int
-  status       String
-
-  assignee     String?
+  id            String   @id @default(uuid())
+  title         String
+  duration      Int
+  status        String
+  assignee      String?
 
   earliestStart Int?
   latestStart   Int?
@@ -56,30 +56,20 @@ model Task {
 }
 
 model Dependency {
-  id String @id @default(uuid())
-
-  taskId String
+  id              String @id @default(uuid())
+  taskId          String
   dependsOnTaskId String
 
-  task Task @relation(
-    "TaskDependencies",
-    fields: [taskId],
-    references: [id]
-  )
+  task      Task @relation("TaskDependencies", fields: [taskId], references: [id])
+  dependsOn Task @relation("TaskDependents", fields: [dependsOnTaskId], references: [id])
 
-  dependsOn Task @relation(
-    "TaskDependents",
-    fields: [dependsOnTaskId],
-    references: [id]
-  )
+  @@unique([taskId, dependsOnTaskId])
 }
 
 model Simulation {
-  id String @id @default(uuid())
-
-  taskId String
-
-  originalDuration Int
+  id                String   @id @default(uuid())
+  taskId            String
+  originalDuration  Int
   simulatedDuration Int
 
   createdAt DateTime @default(now())
