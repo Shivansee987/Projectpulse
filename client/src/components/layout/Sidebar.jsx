@@ -1,43 +1,68 @@
-import { Link } from "react-router-dom";
+import {
+  BarChart3,
+  ChevronLeft,
+  ChevronRight,
+  FolderKanban,
+  GitBranch,
+  LayoutGrid,
+  ListTodo,
+  Sparkles,
+} from "lucide-react";
+import { navItems } from "../../data/projectData";
 
-function Sidebar() {
+const iconMap = {
+  overview: LayoutGrid,
+  "task-list": ListTodo,
+  dependencies: GitBranch,
+  simulator: BarChart3,
+  insights: Sparkles,
+};
+
+function Sidebar({ activeTab, setActiveTab }) {
   return (
-    <aside className="w-64 bg-slate-900 text-white min-h-screen">
-      <div className="p-6 border-b border-slate-700">
-        <h1 className="text-3xl font-bold">
-          ProjectPulse
-        </h1>
+    <aside className="sidebar-panel">
+      <div className="brand-row">
+        <div className="brand-mark">P</div>
+        <div className="brand-copy">
+          <span className="eyebrow">Workspace</span>
+          <strong>ProjectPulse</strong>
+        </div>
       </div>
 
-      <nav className="p-4 space-y-2">
-        <Link
-          to="/"
-          className="block px-4 py-3 rounded-lg hover:bg-slate-800 transition"
-        >
-          Dashboard
-        </Link>
+      <div className="project-switcher">
+        <div className="project-switcher-label">Active Project</div>
+        <div className="project-switcher-value">Atlas Launch</div>
+      </div>
 
-        <Link
-          to="/projects"
-          className="block px-4 py-3 rounded-lg hover:bg-slate-800 transition"
-        >
-          Projects
-        </Link>
+      <nav className="sidebar-nav">
+        {navItems.map((item) => {
+          const Icon = iconMap[item.key];
+          const isActive = activeTab === item.key;
 
-        <Link
-          to="/tasks"
-          className="block px-4 py-3 rounded-lg hover:bg-slate-800 transition"
-        >
-          Tasks
-        </Link>
-
-        <Link
-          to="/analytics"
-          className="block px-4 py-3 rounded-lg hover:bg-slate-800 transition"
-        >
-          Analytics
-        </Link>
+          return (
+            <button
+              key={item.key}
+              type="button"
+              className={`nav-item ${isActive ? "active" : ""}`}
+              onClick={() => setActiveTab(item.key)}
+            >
+              <Icon size={16} />
+              <span>{item.label}</span>
+            </button>
+          );
+        })}
       </nav>
+
+      <div className="sidebar-footer">
+        <div className="mini-card">
+          <div className="mini-card-label">Delivery risk</div>
+          <div className="mini-card-value">Watchlist</div>
+        </div>
+        <button type="button" className="collapse-toggle" aria-label="Collapse sidebar">
+          <ChevronLeft size={14} />
+          <ChevronRight size={14} className="secondary-icon" />
+        </button>
+      </div>
     </aside>
   );
 }

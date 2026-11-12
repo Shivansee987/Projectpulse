@@ -1,18 +1,39 @@
-function Navbar() {
+import { Bell, FolderPlus, Plus, Search } from "lucide-react";
+
+function Navbar({ activeTab, onTaskModalOpen, onProjectModalOpen }) {
   return (
-    <header className="bg-white border-b shadow-sm">
-      <div className="flex items-center justify-between px-8 py-4">
-        <div>
-          <h1 className="text-xl font-semibold text-slate-800">
-            ProjectPulse Dashboard
-          </h1>
+    <header className="topbar">
+      <div className="topbar-search">
+        <Search size={16} />
+        <input type="text" placeholder="Search projects, tasks, risks..." />
+        <span className="shortcut">⌘ K</span>
+      </div>
+
+      <div className="topbar-actions">
+        <div className="project-status-badge">
+          <span className="dot" />
+          {activeTab === "overview" ? "Overview" : activeTab.replace("-", " ")}
         </div>
 
-        <div className="flex items-center gap-4">
-          <span className="text-slate-600 font-medium">
-            Shivansee
-          </span>
+        <div className="avatar-stack">
+          <span>AL</span>
+          <span>RM</span>
+          <span>JW</span>
         </div>
+
+        <button type="button" className="ghost-button">
+          <Bell size={16} />
+        </button>
+
+        <button type="button" className="primary-button" onClick={onTaskModalOpen}>
+          <Plus size={16} />
+          New Task
+        </button>
+
+        <button type="button" className="secondary-button" onClick={onProjectModalOpen}>
+          <FolderPlus size={16} />
+          New Project
+        </button>
       </div>
     </header>
   );
