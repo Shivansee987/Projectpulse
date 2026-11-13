@@ -1,14 +1,16 @@
+
 import {
   BarChart3,
   ChevronLeft,
   ChevronRight,
-  FolderKanban,
   GitBranch,
   LayoutGrid,
   ListTodo,
   Sparkles,
 } from "lucide-react";
+
 import { navItems } from "../../data/projectData";
+import { useNavigate } from "react-router-dom";
 
 const iconMap = {
   overview: LayoutGrid,
@@ -19,6 +21,29 @@ const iconMap = {
 };
 
 function Sidebar({ activeTab, setActiveTab }) {
+  const navigate = useNavigate();
+
+  const hasInsights = navItems.some((item) => item.key === "insights");
+
+  function handleNavigation(key) {
+    if (key === "insights") {
+      navigate("/analytics");
+      return;
+    }
+
+    if (key === "overview") {
+      navigate("/");
+      return;
+    }
+
+    if (key === "task-list") {
+      navigate("/tasks");
+      return;
+    }
+
+    setActiveTab(key);
+  }
+
   return (
     <aside className="sidebar-panel">
       <div className="brand-row">
@@ -39,18 +64,31 @@ function Sidebar({ activeTab, setActiveTab }) {
           const Icon = iconMap[item.key];
           const isActive = activeTab === item.key;
 
+          if (!Icon) return null;
+
           return (
             <button
               key={item.key}
               type="button"
               className={`nav-item ${isActive ? "active" : ""}`}
-              onClick={() => setActiveTab(item.key)}
+              onClick={() => handleNavigation(item.key)}
             >
               <Icon size={16} />
-              <span>{item.label}</span>
+              <span>{item.key === "insights" ? "Analytics" : item.label}</span>
             </button>
           );
         })}
+
+        {!hasInsights && (
+          <button
+            type="button"
+            className={`nav-item ${activeTab === "insights" ? "active" : ""}`}
+            onClick={() => navigate("/analytics")}
+          >
+            <Sparkles size={16} />
+            <span>Analytics</span>
+          </button>
+        )}
       </nav>
 
       <div className="sidebar-footer">
@@ -58,7 +96,12 @@ function Sidebar({ activeTab, setActiveTab }) {
           <div className="mini-card-label">Delivery risk</div>
           <div className="mini-card-value">Watchlist</div>
         </div>
-        <button type="button" className="collapse-toggle" aria-label="Collapse sidebar">
+
+        <button
+          type="button"
+          className="collapse-toggle"
+          aria-label="Collapse sidebar"
+        >
           <ChevronLeft size={14} />
           <ChevronRight size={14} className="secondary-icon" />
         </button>
