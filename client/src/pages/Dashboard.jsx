@@ -17,6 +17,7 @@ import DependencyGraph from "../components/dashboard/DependencyGraph";
 import CriticalPath from "../components/dashboard/CriticalPath";
 import RiskPanel from "../components/dashboard/RiskPanel";
 import WhatIfSimulation from "../components/dashboard/WhatIfSimulation";
+import SimulationHistory from "../components/dashboard/SimulationHistory";
 
 const statusOptions = [
   "Not started",
@@ -688,6 +689,9 @@ function Dashboard() {
               projectId={activeProject.id}
               tasks={tasks}
             />
+
+            {/* SIMULATION HISTORY */}
+            <SimulationHistory projectId={activeProject.id} />
           </>
         ) : (
           <div
