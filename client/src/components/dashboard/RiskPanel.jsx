@@ -235,4 +235,3 @@ function RiskPanel({ projectId }) {
 }
 
 export default RiskPanel;
-
