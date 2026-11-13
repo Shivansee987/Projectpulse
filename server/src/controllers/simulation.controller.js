@@ -1,7 +1,10 @@
 
 const prisma = require("../config/prisma");
 
+// ==========================================
 // WHAT-IF SIMULATION
+// ==========================================
+
 exports.simulateTask = async (req, res) => {
   try {
     const { taskId } = req.params;
@@ -229,6 +232,95 @@ exports.simulateTask = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Could not complete simulation",
+    });
+  }
+};
+
+
+// ==========================================
+// GET SIMULATION HISTORY FOR A PROJECT
+// ==========================================
+
+exports.getProjectSimulationHistory = async (req, res) => {
+  try {
+    const { projectId } = req.params;
+
+    // VERIFY PROJECT OWNERSHIP
+    const project = await prisma.project.findFirst({
+      where: {
+        id: projectId,
+        ownerId: req.user.id,
+      },
+      include: {
+        tasks: {
+          select: {
+            id: true,
+            title: true,
+          },
+        },
+      },
+    });
+
+    if (!project) {
+      return res.status(404).json({
+        success: false,
+        message: "Project not found",
+      });
+    }
+
+    // GET PROJECT TASK IDS
+    const taskIds = project.tasks.map(
+      (task) => task.id
+    );
+
+    // FETCH SAVED SIMULATIONS
+    const simulations = taskIds.length
+      ? await prisma.simulation.findMany({
+          where: {
+            taskId: {
+              in: taskIds,
+            },
+          },
+          orderBy: {
+            createdAt: "desc",
+          },
+        })
+      : [];
+
+    // MAP TASK TITLES
+    const taskMap = new Map(
+      project.tasks.map((task) => [
+        task.id,
+        task.title,
+      ])
+    );
+
+    // PREPARE HISTORY
+    const history = simulations.map((simulation) => ({
+      ...simulation,
+      taskTitle:
+        taskMap.get(simulation.taskId) || "Unknown Task",
+      projectId: project.id,
+      durationChange:
+        simulation.simulatedDuration -
+        simulation.originalDuration,
+    }));
+
+    return res.status(200).json({
+      success: true,
+      message: "Simulation history retrieved successfully",
+      projectId: project.id,
+      projectTitle: project.title,
+      count: history.length,
+      history,
+    });
+
+  } catch (error) {
+    console.error("Simulation history error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Could not retrieve simulation history",
     });
   }
 };
