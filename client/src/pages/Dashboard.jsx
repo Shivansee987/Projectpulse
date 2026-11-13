@@ -13,6 +13,8 @@ import {
 
 import Layout from "../components/layout/Layout";
 import api from "../services/api";
+import DependencyGraph from "../components/dashboard/DependencyGraph";
+import CriticalPath from "../components/dashboard/CriticalPath";
 
 const statusOptions = [
   "Not started",
@@ -37,7 +39,6 @@ const emptyTaskForm = {
 
 function toDateInputValue(value) {
   if (!value) return "";
-
   return String(value).slice(0, 10);
 }
 
@@ -663,6 +664,13 @@ function Dashboard() {
                 </div>
               )}
             </div>
+
+            {/* Dependency Graph */}
+            <DependencyGraph tasks={tasks} />
+
+            {/* Critical Path Analysis */}
+            <CriticalPath projectId={activeProject.id} />
+
           </>
         ) : (
           <div
@@ -744,7 +752,7 @@ function Dashboard() {
                         deadline: event.target.value,
                       })
                     }
-                  />
+                    />
                 </div>
 
                 <div className="modal-actions">
@@ -887,3 +895,4 @@ function Dashboard() {
 }
 
 export default Dashboard;
+
