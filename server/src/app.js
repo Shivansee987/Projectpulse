@@ -10,6 +10,7 @@ const taskRoutes = require("./routes/task.routes");
 const dependencyRoutes = require("./routes/dependency.routes");
 const cpmRoutes = require("./routes/cpm.routes");
 const simulationRoutes = require("./routes/simulation.routes");
+const riskRoutes = require("./routes/risk.routes");
 
 const app = express();
 
@@ -23,6 +24,7 @@ app.use("/api/tasks", taskRoutes);
 app.use("/api/dependencies", dependencyRoutes);
 app.use("/api/cpm", cpmRoutes);
 app.use("/api/simulations", simulationRoutes);
+app.use("/api/risks", riskRoutes);
 
 // HOME ROUTE
 app.get("/", (req, res) => {
