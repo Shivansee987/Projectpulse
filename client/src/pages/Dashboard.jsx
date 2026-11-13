@@ -15,6 +15,8 @@ import Layout from "../components/layout/Layout";
 import api from "../services/api";
 import DependencyGraph from "../components/dashboard/DependencyGraph";
 import CriticalPath from "../components/dashboard/CriticalPath";
+import RiskPanel from "../components/dashboard/RiskPanel";
+import WhatIfSimulation from "../components/dashboard/WhatIfSimulation";
 
 const statusOptions = [
   "Not started",
@@ -75,6 +77,7 @@ function Dashboard() {
   const [projectForm, setProjectForm] = useState(emptyProjectForm);
   const [taskForm, setTaskForm] = useState(emptyTaskForm);
 
+  // LOAD PROJECTS
   const loadProjects = async () => {
     try {
       setLoading(true);
@@ -102,6 +105,7 @@ function Dashboard() {
     }
   };
 
+  // LOAD TASKS
   const loadTasks = async (projectId) => {
     if (!projectId) {
       setTasks([]);
@@ -147,6 +151,7 @@ function Dashboard() {
     }
   }, [activeProject?.id]);
 
+  // DASHBOARD STATISTICS
   const completedTasks = tasks.filter(
     (task) => task.status === "Done"
   ).length;
@@ -180,13 +185,14 @@ function Dashboard() {
       .includes(searchQuery.toLowerCase())
   );
 
-  // CREATE OR UPDATE PROJECT
+  // CREATE PROJECT
   const openCreateProject = () => {
     setEditingProject(null);
     setProjectForm(emptyProjectForm);
     setProjectModalOpen(true);
   };
 
+  // EDIT PROJECT
   const openEditProject = () => {
     if (!activeProject) return;
 
@@ -202,6 +208,7 @@ function Dashboard() {
     setProjectModalOpen(true);
   };
 
+  // SAVE PROJECT
   const handleSaveProject = async (event) => {
     event.preventDefault();
 
@@ -250,13 +257,14 @@ function Dashboard() {
     }
   };
 
-  // CREATE OR UPDATE TASK
+  // CREATE TASK
   const openCreateTask = () => {
     setEditingTask(null);
     setTaskForm(emptyTaskForm);
     setTaskModalOpen(true);
   };
 
+  // EDIT TASK
   const openEditTask = (task) => {
     setEditingTask(task);
 
@@ -270,6 +278,7 @@ function Dashboard() {
     setTaskModalOpen(true);
   };
 
+  // SAVE TASK
   const handleSaveTask = async (event) => {
     event.preventDefault();
 
@@ -380,26 +389,26 @@ function Dashboard() {
     <Layout {...layoutProps}>
       <div className="page-shell">
 
-        {/* Dashboard Header */}
-        <div className="glass-panel" style={{ padding: "28px" }}>
+        {/* DASHBOARD HEADER */}
+        <div className="glass-panel" style={{ padding: 28 }}>
           <p className="eyebrow">PROJECTPULSE WORKSPACE</p>
 
-          <h1 style={{ marginTop: "8px", fontSize: "2rem" }}>
+          <h1 style={{ marginTop: 8, fontSize: "2rem" }}>
             Project Dashboard
           </h1>
 
-          <p className="subtitle" style={{ marginTop: "8px" }}>
+          <p className="subtitle" style={{ marginTop: 8 }}>
             Manage your projects, tasks and delivery progress.
           </p>
 
           {error && (
-            <div style={{ marginTop: "20px", color: "#dc6666" }}>
+            <div style={{ marginTop: 20, color: "#dc6666" }}>
               <AlertCircle size={16} style={{ verticalAlign: "middle" }} />
               {" "}{error}
             </div>
           )}
 
-          <div style={{ marginTop: "28px" }}>
+          <div style={{ marginTop: 28 }}>
             <label className="eyebrow" htmlFor="project-selector">
               SELECT PROJECT
             </label>
@@ -417,10 +426,10 @@ function Dashboard() {
               style={{
                 display: "block",
                 width: "100%",
-                maxWidth: "420px",
-                padding: "12px",
-                marginTop: "8px",
-                borderRadius: "10px",
+                maxWidth: 420,
+                padding: 12,
+                marginTop: 8,
+                borderRadius: 10,
               }}
             >
               <option value="">Choose a project</option>
@@ -433,7 +442,7 @@ function Dashboard() {
             </select>
 
             {searchQuery && filteredProjects.length === 0 && (
-              <p className="subtitle" style={{ marginTop: "8px" }}>
+              <p className="subtitle" style={{ marginTop: 8 }}>
                 No matching projects found.
               </p>
             )}
@@ -442,52 +451,52 @@ function Dashboard() {
 
         {activeProject ? (
           <>
-            {/* Statistics */}
+            {/* STATISTICS */}
             <div
               style={{
                 display: "grid",
                 gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-                gap: "16px",
-                marginTop: "20px",
+                gap: 16,
+                marginTop: 20,
               }}
             >
-              <div className="glass-panel" style={{ padding: "22px" }}>
+              <div className="glass-panel" style={{ padding: 22 }}>
                 <FolderKanban size={22} />
-                <p className="eyebrow" style={{ marginTop: "14px" }}>
+                <p className="eyebrow" style={{ marginTop: 14 }}>
                   TOTAL TASKS
                 </p>
                 <h2>{tasks.length}</h2>
               </div>
 
-              <div className="glass-panel" style={{ padding: "22px" }}>
+              <div className="glass-panel" style={{ padding: 22 }}>
                 <CheckCircle2 size={22} />
-                <p className="eyebrow" style={{ marginTop: "14px" }}>
+                <p className="eyebrow" style={{ marginTop: 14 }}>
                   COMPLETED
                 </p>
                 <h2>{completedTasks}</h2>
               </div>
 
-              <div className="glass-panel" style={{ padding: "22px" }}>
+              <div className="glass-panel" style={{ padding: 22 }}>
                 <Clock3 size={22} />
-                <p className="eyebrow" style={{ marginTop: "14px" }}>
+                <p className="eyebrow" style={{ marginTop: 14 }}>
                   TOTAL DURATION
                 </p>
                 <h2>{totalDuration} days</h2>
               </div>
 
-              <div className="glass-panel" style={{ padding: "22px" }}>
+              <div className="glass-panel" style={{ padding: 22 }}>
                 <ListTodo size={22} />
-                <p className="eyebrow" style={{ marginTop: "14px" }}>
+                <p className="eyebrow" style={{ marginTop: 14 }}>
                   PROJECT PROGRESS
                 </p>
                 <h2>{progress}%</h2>
               </div>
             </div>
 
-            {/* Active Project */}
+            {/* ACTIVE PROJECT */}
             <div
               className="glass-panel"
-              style={{ padding: "24px", marginTop: "20px" }}
+              style={{ padding: 24, marginTop: 20 }}
             >
               <div
                 style={{
@@ -495,13 +504,13 @@ function Dashboard() {
                   justifyContent: "space-between",
                   alignItems: "center",
                   flexWrap: "wrap",
-                  gap: "12px",
+                  gap: 12,
                 }}
               >
                 <div>
                   <p className="eyebrow">ACTIVE PROJECT</p>
 
-                  <h2 style={{ marginTop: "8px" }}>
+                  <h2 style={{ marginTop: 8 }}>
                     {activeProject.title}
                   </h2>
 
@@ -510,13 +519,13 @@ function Dashboard() {
                   </p>
 
                   {activeProject.deadline && (
-                    <p className="subtitle" style={{ marginTop: "8px" }}>
+                    <p className="subtitle" style={{ marginTop: 8 }}>
                       Deadline: {toDateInputValue(activeProject.deadline)}
                     </p>
                   )}
                 </div>
 
-                <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+                <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
                   <button
                     type="button"
                     className="secondary-button"
@@ -538,10 +547,10 @@ function Dashboard() {
 
               <div
                 style={{
-                  height: "9px",
+                  height: 9,
                   background: "rgba(128,128,128,0.2)",
-                  borderRadius: "20px",
-                  marginTop: "22px",
+                  borderRadius: 20,
+                  marginTop: 22,
                   overflow: "hidden",
                 }}
               >
@@ -550,40 +559,40 @@ function Dashboard() {
                     width: `${progress}%`,
                     height: "100%",
                     background: "#35a879",
-                    borderRadius: "20px",
+                    borderRadius: 20,
                     transition: "width 0.4s ease",
                   }}
                 />
               </div>
 
-              <p className="subtitle" style={{ marginTop: "8px" }}>
+              <p className="subtitle" style={{ marginTop: 8 }}>
                 {progress}% tasks completed
               </p>
             </div>
 
-            {/* Tasks */}
+            {/* PROJECT TASKS */}
             <div
               className="glass-panel"
-              style={{ padding: "24px", marginTop: "20px" }}
+              style={{ padding: 24, marginTop: 20 }}
             >
               <div>
                 <p className="eyebrow">WORK MANAGEMENT</p>
-                <h2 style={{ marginTop: "8px" }}>Project Tasks</h2>
-                <p className="subtitle" style={{ marginTop: "6px" }}>
+                <h2 style={{ marginTop: 8 }}>Project Tasks</h2>
+                <p className="subtitle" style={{ marginTop: 6 }}>
                   Update, edit and manage your project tasks.
                 </p>
               </div>
 
               {tasksLoading ? (
-                <p style={{ marginTop: "24px" }}>Loading tasks...</p>
+                <p style={{ marginTop: 24 }}>Loading tasks...</p>
               ) : filteredTasks.length === 0 ? (
-                <p style={{ marginTop: "24px" }}>
+                <p style={{ marginTop: 24 }}>
                   {searchQuery
                     ? "No tasks match your search."
                     : "No tasks yet. Use New Task in the top navigation to add one."}
                 </p>
               ) : (
-                <div style={{ overflowX: "auto", marginTop: "20px" }}>
+                <div style={{ overflowX: "auto", marginTop: 20 }}>
                   <table style={{ width: "100%", borderCollapse: "collapse" }}>
                     <thead>
                       <tr>
@@ -633,7 +642,7 @@ function Dashboard() {
                               style={{
                                 display: "flex",
                                 justifyContent: "flex-end",
-                                gap: "8px",
+                                gap: 8,
                               }}
                             >
                               <button
@@ -665,28 +674,36 @@ function Dashboard() {
               )}
             </div>
 
-            {/* Dependency Graph */}
+            {/* DEPENDENCY GRAPH */}
             <DependencyGraph tasks={tasks} />
 
-            {/* Critical Path Analysis */}
+            {/* CRITICAL PATH */}
             <CriticalPath projectId={activeProject.id} />
 
+            {/* RISK ANALYSIS */}
+            <RiskPanel projectId={activeProject.id} />
+
+            {/* WHAT-IF SIMULATION */}
+            <WhatIfSimulation
+              projectId={activeProject.id}
+              tasks={tasks}
+            />
           </>
         ) : (
           <div
             className="glass-panel"
-            style={{ padding: "32px", marginTop: "20px" }}
+            style={{ padding: 32, marginTop: 20 }}
           >
             <h2>No projects found</h2>
 
-            <p className="subtitle" style={{ marginTop: "8px" }}>
+            <p className="subtitle" style={{ marginTop: 8 }}>
               Use the New Project button in the top navigation to create
               your first project.
             </p>
           </div>
         )}
 
-        {/* Create / Edit Project Modal */}
+        {/* CREATE / EDIT PROJECT MODAL */}
         {isProjectModalOpen && (
           <div className="modal-overlay">
             <div className="modal-card">
@@ -752,7 +769,7 @@ function Dashboard() {
                         deadline: event.target.value,
                       })
                     }
-                    />
+                  />
                 </div>
 
                 <div className="modal-actions">
@@ -784,7 +801,7 @@ function Dashboard() {
           </div>
         )}
 
-        {/* Create / Edit Task Modal */}
+        {/* CREATE / EDIT TASK MODAL */}
         {isTaskModalOpen && (
           <div className="modal-overlay">
             <div className="modal-card">
@@ -895,4 +912,3 @@ function Dashboard() {
 }
 
 export default Dashboard;
-
