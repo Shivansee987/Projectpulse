@@ -1,7 +1,15 @@
+
 import Sidebar from "./Sidebar";
 import Navbar from "./Navbar";
 
-function Layout({ children, activeTab, setActiveTab, onTaskModalOpen, onProjectModalOpen }) {
+function Layout({
+  children,
+  activeTab,
+  setActiveTab,
+  onTaskModalOpen,
+  onProjectModalOpen,
+  onSearch,
+}) {
   return (
     <div className="project-shell">
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
@@ -11,6 +19,7 @@ function Layout({ children, activeTab, setActiveTab, onTaskModalOpen, onProjectM
           activeTab={activeTab}
           onTaskModalOpen={onTaskModalOpen}
           onProjectModalOpen={onProjectModalOpen}
+          onSearch={onSearch}
         />
 
         <main className="page-content">{children}</main>
