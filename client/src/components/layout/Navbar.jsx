@@ -11,6 +11,11 @@ function Navbar({
   const [searchText, setSearchText] = useState("");
   const [showNotifications, setShowNotifications] = useState(false);
 
+  // Show navbar only on Dashboard
+  if (activeTab !== "overview") {
+    return null;
+  }
+
   const handleSearch = (event) => {
     const value = event.target.value;
     setSearchText(value);
@@ -21,6 +26,7 @@ function Navbar({
     <header className="topbar">
       <div className="topbar-search">
         <Search size={16} />
+
         <input
           type="text"
           placeholder="Search projects, tasks, risks..."
@@ -48,17 +54,10 @@ function Navbar({
       <div className="topbar-actions">
         <div className="project-status-badge">
           <span className="dot" />
-          {activeTab === "overview"
-            ? "Overview"
-            : activeTab.replace("-", " ")}
+          Dashboard
         </div>
 
-        <div className="avatar-stack">
-          <span>AL</span>
-          <span>RM</span>
-          <span>JW</span>
-        </div>
-
+        {/* Notifications */}
         <div style={{ position: "relative" }}>
           <button
             type="button"
@@ -83,10 +82,12 @@ function Navbar({
               }}
             >
               <h3>Notifications</h3>
+
               <p className="subtitle" style={{ marginTop: "10px" }}>
-                You're all caught up. New project and task notifications
-                will appear here when notification support is added.
+                You're all caught up. New notifications will appear here
+                when notification support is added.
               </p>
+
               <button
                 type="button"
                 className="secondary-button"
@@ -99,6 +100,7 @@ function Navbar({
           )}
         </div>
 
+        {/* New Task */}
         <button
           type="button"
           className="primary-button"
@@ -108,6 +110,7 @@ function Navbar({
           New Task
         </button>
 
+        {/* New Project */}
         <button
           type="button"
           className="secondary-button"
