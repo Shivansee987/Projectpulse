@@ -18,6 +18,7 @@ import CriticalPath from "../components/dashboard/CriticalPath";
 import RiskPanel from "../components/dashboard/RiskPanel";
 import WhatIfSimulation from "../components/dashboard/WhatIfSimulation";
 import SimulationHistory from "../components/dashboard/SimulationHistory";
+import ProjectReport from "../components/dashboard/ProjectReport";
 
 const statusOptions = [
   "Not started",
@@ -62,6 +63,10 @@ function Dashboard() {
   const [projects, setProjects] = useState([]);
   const [activeProject, setActiveProject] = useState(null);
   const [tasks, setTasks] = useState([]);
+
+  const [reportCpm, setReportCpm] = useState(null);
+  const [reportRisks, setReportRisks] = useState(null);
+  const [reportHistory, setReportHistory] = useState([]);
 
   const [loading, setLoading] = useState(true);
   const [tasksLoading, setTasksLoading] = useState(false);
@@ -150,6 +155,54 @@ function Dashboard() {
     } else {
       setTasks([]);
     }
+  }, [activeProject?.id]);
+
+  // LOAD DATA FOR PDF REPORT
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadReportData = async () => {
+      if (!activeProject?.id) {
+        setReportCpm(null);
+        setReportRisks(null);
+        setReportHistory([]);
+        return;
+      }
+
+      const projectId = activeProject.id;
+
+      setReportCpm(null);
+      setReportRisks(null);
+      setReportHistory([]);
+
+      const results = await Promise.allSettled([
+        api.get(`/cpm/${projectId}`),
+        api.get(`/risks/${projectId}`),
+        api.get(`/simulations/project/${projectId}`),
+      ]);
+
+      if (cancelled) return;
+
+      if (results[0].status === "fulfilled") {
+        setReportCpm(results[0].value.data);
+      }
+
+      if (results[1].status === "fulfilled") {
+        setReportRisks(results[1].value.data);
+      }
+
+      if (results[2].status === "fulfilled") {
+        setReportHistory(
+          results[2].value.data.history || []
+        );
+      }
+    };
+
+    loadReportData();
+
+    return () => {
+      cancelled = true;
+    };
   }, [activeProject?.id]);
 
   // DASHBOARD STATISTICS
@@ -692,6 +745,15 @@ function Dashboard() {
 
             {/* SIMULATION HISTORY */}
             <SimulationHistory projectId={activeProject.id} />
+
+            {/* PDF PROJECT REPORT */}
+            <ProjectReport
+              project={activeProject}
+              tasks={tasks}
+              cpm={reportCpm}
+              risks={reportRisks}
+              history={reportHistory}
+            />
           </>
         ) : (
           <div
