@@ -2,13 +2,15 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   FolderKanban,
-  Plus,
   RefreshCw,
   CheckCircle2,
   Clock3,
   AlertCircle,
   ListTodo,
+  Pencil,
+  Trash2,
 } from "lucide-react";
+
 import Layout from "../components/layout/Layout";
 import api from "../services/api";
 
@@ -19,32 +21,58 @@ const statusOptions = [
   "Done",
 ];
 
+const emptyProjectForm = {
+  title: "",
+  description: "",
+  startDate: "",
+  deadline: "",
+};
+
+const emptyTaskForm = {
+  title: "",
+  duration: 1,
+  assignee: "",
+  status: "Not started",
+};
+
+function toDateInputValue(value) {
+  if (!value) return "";
+
+  return String(value).slice(0, 10);
+}
+
+function toBackendStatus(status) {
+  if (status === "Done") return "Completed";
+  if (status === "Not started") return "Not Started";
+  return status;
+}
+
+function toFrontendStatus(status) {
+  if (status === "Completed") return "Done";
+  if (status === "Not Started") return "Not started";
+  return status;
+}
+
 function Dashboard() {
   const [activeTab, setActiveTab] = useState("overview");
   const [projects, setProjects] = useState([]);
   const [activeProject, setActiveProject] = useState(null);
   const [tasks, setTasks] = useState([]);
+
   const [loading, setLoading] = useState(true);
   const [tasksLoading, setTasksLoading] = useState(false);
-  const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
 
   const [isProjectModalOpen, setProjectModalOpen] = useState(false);
   const [isTaskModalOpen, setTaskModalOpen] = useState(false);
 
-  const [projectForm, setProjectForm] = useState({
-    title: "",
-    description: "",
-    startDate: "",
-    deadline: "",
-  });
+  const [editingProject, setEditingProject] = useState(null);
+  const [editingTask, setEditingTask] = useState(null);
 
-  const [taskForm, setTaskForm] = useState({
-    title: "",
-    duration: 1,
-    assignee: "",
-  });
+  const [projectForm, setProjectForm] = useState(emptyProjectForm);
+  const [taskForm, setTaskForm] = useState(emptyTaskForm);
 
   const loadProjects = async () => {
     try {
@@ -74,7 +102,10 @@ function Dashboard() {
   };
 
   const loadTasks = async (projectId) => {
-    if (!projectId) return;
+    if (!projectId) {
+      setTasks([]);
+      return;
+    }
 
     try {
       setTasksLoading(true);
@@ -89,17 +120,14 @@ function Dashboard() {
       setTasks(
         list.map((task) => ({
           ...task,
-          status:
-            task.status === "Completed"
-              ? "Done"
-              : task.status === "Not Started"
-                ? "Not started"
-                : task.status,
+          status: toFrontendStatus(task.status),
           assignee: task.assignee || "Unassigned",
         }))
       );
     } catch (err) {
-      setError(err.response?.data?.message || "Tasks could not be loaded.");
+      setError(
+        err.response?.data?.message || "Tasks could not be loaded."
+      );
       setTasks([]);
     } finally {
       setTasksLoading(false);
@@ -151,37 +179,97 @@ function Dashboard() {
       .includes(searchQuery.toLowerCase())
   );
 
-  const handleCreateProject = async (event) => {
+  // CREATE OR UPDATE PROJECT
+  const openCreateProject = () => {
+    setEditingProject(null);
+    setProjectForm(emptyProjectForm);
+    setProjectModalOpen(true);
+  };
+
+  const openEditProject = () => {
+    if (!activeProject) return;
+
+    setEditingProject(activeProject);
+
+    setProjectForm({
+      title: activeProject.title || "",
+      description: activeProject.description || "",
+      startDate: toDateInputValue(activeProject.startDate),
+      deadline: toDateInputValue(activeProject.deadline),
+    });
+
+    setProjectModalOpen(true);
+  };
+
+  const handleSaveProject = async (event) => {
     event.preventDefault();
 
     try {
       setSaving(true);
       setError("");
 
-      const response = await api.post("/projects", projectForm);
-      const newProject = response.data.project || response.data;
+      if (editingProject) {
+        const response = await api.put(
+          `/projects/${editingProject.id}`,
+          projectForm
+        );
 
-      setProjects((current) => [...current, newProject]);
-      setActiveProject(newProject);
+        const updatedProject =
+          response.data.project || response.data;
 
-      setProjectForm({
-        title: "",
-        description: "",
-        startDate: "",
-        deadline: "",
-      });
+        setProjects((current) =>
+          current.map((project) =>
+            project.id === updatedProject.id
+              ? updatedProject
+              : project
+          )
+        );
 
+        setActiveProject(updatedProject);
+      } else {
+        const response = await api.post("/projects", projectForm);
+
+        const newProject =
+          response.data.project || response.data;
+
+        setProjects((current) => [...current, newProject]);
+        setActiveProject(newProject);
+      }
+
+      setProjectForm(emptyProjectForm);
+      setEditingProject(null);
       setProjectModalOpen(false);
     } catch (err) {
       setError(
-        err.response?.data?.message || "Project could not be created."
+        err.response?.data?.message ||
+          "Project could not be saved."
       );
     } finally {
       setSaving(false);
     }
   };
 
-  const handleCreateTask = async (event) => {
+  // CREATE OR UPDATE TASK
+  const openCreateTask = () => {
+    setEditingTask(null);
+    setTaskForm(emptyTaskForm);
+    setTaskModalOpen(true);
+  };
+
+  const openEditTask = (task) => {
+    setEditingTask(task);
+
+    setTaskForm({
+      title: task.title || "",
+      duration: task.duration || 1,
+      assignee: task.assignee === "Unassigned" ? "" : task.assignee,
+      status: task.status || "Not started",
+    });
+
+    setTaskModalOpen(true);
+  };
+
+  const handleSaveTask = async (event) => {
     event.preventDefault();
 
     if (!activeProject?.id) return;
@@ -190,44 +278,68 @@ function Dashboard() {
       setSaving(true);
       setError("");
 
-      await api.post("/tasks", {
+      const payload = {
         title: taskForm.title,
         duration: Number(taskForm.duration),
-        projectId: activeProject.id,
         assignee: taskForm.assignee || undefined,
-      });
+        status: toBackendStatus(taskForm.status),
+      };
+
+      if (editingTask) {
+        await api.put(`/tasks/${editingTask.id}`, payload);
+      } else {
+        await api.post("/tasks", {
+          ...payload,
+          projectId: activeProject.id,
+        });
+      }
 
       await loadTasks(activeProject.id);
 
-      setTaskForm({
-        title: "",
-        duration: 1,
-        assignee: "",
-      });
-
+      setTaskForm(emptyTaskForm);
+      setEditingTask(null);
       setTaskModalOpen(false);
     } catch (err) {
       setError(
-        err.response?.data?.message || "Task could not be created."
+        err.response?.data?.message ||
+          "Task could not be saved."
       );
     } finally {
       setSaving(false);
     }
   };
 
-  const handleStatusChange = async (taskId, newStatus) => {
-    const backendStatus =
-      newStatus === "Done"
-        ? "Completed"
-        : newStatus === "Not started"
-          ? "Not Started"
-          : newStatus;
+  // DELETE TASK
+  const handleDeleteTask = async (task) => {
+    const confirmed = window.confirm(
+      `Are you sure you want to delete "${task.title}"?`
+    );
+
+    if (!confirmed) return;
 
     try {
       setError("");
 
+      await api.delete(`/tasks/${task.id}`);
+
+      setTasks((current) =>
+        current.filter((item) => item.id !== task.id)
+      );
+    } catch (err) {
+      setError(
+        err.response?.data?.message ||
+          "Task could not be deleted."
+      );
+    }
+  };
+
+  // UPDATE TASK STATUS
+  const handleStatusChange = async (taskId, newStatus) => {
+    try {
+      setError("");
+
       await api.put(`/tasks/${taskId}`, {
-        status: backendStatus,
+        status: toBackendStatus(newStatus),
       });
 
       setTasks((current) =>
@@ -239,7 +351,8 @@ function Dashboard() {
       );
     } catch (err) {
       setError(
-        err.response?.data?.message || "Task status could not be updated."
+        err.response?.data?.message ||
+          "Task status could not be updated."
       );
     }
   };
@@ -247,8 +360,8 @@ function Dashboard() {
   const layoutProps = {
     activeTab,
     setActiveTab,
-    onTaskModalOpen: () => setTaskModalOpen(true),
-    onProjectModalOpen: () => setProjectModalOpen(true),
+    onTaskModalOpen: openCreateTask,
+    onProjectModalOpen: openCreateProject,
     onSearch: setSearchQuery,
   };
 
@@ -268,33 +381,15 @@ function Dashboard() {
 
         {/* Dashboard Header */}
         <div className="glass-panel" style={{ padding: "28px" }}>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              flexWrap: "wrap",
-              gap: "16px",
-            }}
-          >
-            <div>
-              <p className="eyebrow">PROJECTPULSE WORKSPACE</p>
-              <h1 style={{ marginTop: "8px", fontSize: "2rem" }}>
-                Project Dashboard
-              </h1>
-              <p className="subtitle" style={{ marginTop: "8px" }}>
-                Manage your projects, tasks and delivery progress.
-              </p>
-            </div>
+          <p className="eyebrow">PROJECTPULSE WORKSPACE</p>
 
-            <button
-              type="button"
-              className="primary-button"
-              onClick={() => setProjectModalOpen(true)}
-            >
-              <Plus size={17} /> New Project
-            </button>
-          </div>
+          <h1 style={{ marginTop: "8px", fontSize: "2rem" }}>
+            Project Dashboard
+          </h1>
+
+          <p className="subtitle" style={{ marginTop: "8px" }}>
+            Manage your projects, tasks and delivery progress.
+          </p>
 
           {error && (
             <div style={{ marginTop: "20px", color: "#dc6666" }}>
@@ -304,14 +399,18 @@ function Dashboard() {
           )}
 
           <div style={{ marginTop: "28px" }}>
-            <label className="eyebrow">SELECT PROJECT</label>
+            <label className="eyebrow" htmlFor="project-selector">
+              SELECT PROJECT
+            </label>
 
             <select
+              id="project-selector"
               value={activeProject?.id || ""}
               onChange={(event) => {
                 const selected = projects.find(
                   (project) => project.id === event.target.value
                 );
+
                 setActiveProject(selected || null);
               }}
               style={{
@@ -400,22 +499,40 @@ function Dashboard() {
               >
                 <div>
                   <p className="eyebrow">ACTIVE PROJECT</p>
+
                   <h2 style={{ marginTop: "8px" }}>
                     {activeProject.title}
                   </h2>
+
                   <p className="subtitle">
                     {activeProject.description || "No project description"}
                   </p>
+
+                  {activeProject.deadline && (
+                    <p className="subtitle" style={{ marginTop: "8px" }}>
+                      Deadline: {toDateInputValue(activeProject.deadline)}
+                    </p>
+                  )}
                 </div>
 
-                <button
-                  type="button"
-                  className="secondary-button"
-                  onClick={() => loadTasks(activeProject.id)}
-                  disabled={tasksLoading}
-                >
-                  <RefreshCw size={16} /> Refresh
-                </button>
+                <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    onClick={openEditProject}
+                  >
+                    <Pencil size={16} /> Edit Project
+                  </button>
+
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    onClick={() => loadTasks(activeProject.id)}
+                    disabled={tasksLoading}
+                  >
+                    <RefreshCw size={16} /> Refresh
+                  </button>
+                </div>
               </div>
 
               <div
@@ -433,6 +550,7 @@ function Dashboard() {
                     height: "100%",
                     background: "#35a879",
                     borderRadius: "20px",
+                    transition: "width 0.4s ease",
                   }}
                 />
               </div>
@@ -447,27 +565,12 @@ function Dashboard() {
               className="glass-panel"
               style={{ padding: "24px", marginTop: "20px" }}
             >
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  gap: "12px",
-                  flexWrap: "wrap",
-                }}
-              >
-                <div>
-                  <p className="eyebrow">WORK MANAGEMENT</p>
-                  <h2 style={{ marginTop: "8px" }}>Project Tasks</h2>
-                </div>
-
-                <button
-                  type="button"
-                  className="primary-button"
-                  onClick={() => setTaskModalOpen(true)}
-                >
-                  <Plus size={17} /> Add Task
-                </button>
+              <div>
+                <p className="eyebrow">WORK MANAGEMENT</p>
+                <h2 style={{ marginTop: "8px" }}>Project Tasks</h2>
+                <p className="subtitle" style={{ marginTop: "6px" }}>
+                  Update, edit and manage your project tasks.
+                </p>
               </div>
 
               {tasksLoading ? (
@@ -476,7 +579,7 @@ function Dashboard() {
                 <p style={{ marginTop: "24px" }}>
                   {searchQuery
                     ? "No tasks match your search."
-                    : "No tasks yet. Add your first task."}
+                    : "No tasks yet. Use New Task in the top navigation to add one."}
                 </p>
               ) : (
                 <div style={{ overflowX: "auto", marginTop: "20px" }}>
@@ -487,6 +590,7 @@ function Dashboard() {
                         <th align="left">Assignee</th>
                         <th align="left">Duration</th>
                         <th align="left">Status</th>
+                        <th align="right">Actions</th>
                       </tr>
                     </thead>
 
@@ -522,6 +626,36 @@ function Dashboard() {
                               ))}
                             </select>
                           </td>
+
+                          <td style={{ padding: "14px 8px", textAlign: "right" }}>
+                            <div
+                              style={{
+                                display: "flex",
+                                justifyContent: "flex-end",
+                                gap: "8px",
+                              }}
+                            >
+                              <button
+                                type="button"
+                                className="secondary-button"
+                                title="Edit task"
+                                aria-label={`Edit ${task.title}`}
+                                onClick={() => openEditTask(task)}
+                              >
+                                <Pencil size={15} />
+                              </button>
+
+                              <button
+                                type="button"
+                                className="secondary-button"
+                                title="Delete task"
+                                aria-label={`Delete ${task.title}`}
+                                onClick={() => handleDeleteTask(task)}
+                              >
+                                <Trash2 size={15} />
+                              </button>
+                            </div>
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -536,28 +670,21 @@ function Dashboard() {
             style={{ padding: "32px", marginTop: "20px" }}
           >
             <h2>No projects found</h2>
-            <p className="subtitle" style={{ marginTop: "8px" }}>
-              Create your first project to start managing tasks.
-            </p>
 
-            <button
-              type="button"
-              className="primary-button"
-              style={{ marginTop: "18px" }}
-              onClick={() => setProjectModalOpen(true)}
-            >
-              <Plus size={17} /> Create Project
-            </button>
+            <p className="subtitle" style={{ marginTop: "8px" }}>
+              Use the New Project button in the top navigation to create
+              your first project.
+            </p>
           </div>
         )}
 
-        {/* Create Project Modal */}
+        {/* Create / Edit Project Modal */}
         {isProjectModalOpen && (
           <div className="modal-overlay">
             <div className="modal-card">
-              <h2>Create New Project</h2>
+              <h2>{editingProject ? "Edit Project" : "Create New Project"}</h2>
 
-              <form onSubmit={handleCreateProject}>
+              <form onSubmit={handleSaveProject}>
                 <div className="form-group">
                   <label htmlFor="project-title">Project title</label>
                   <input
@@ -624,7 +751,10 @@ function Dashboard() {
                   <button
                     type="button"
                     className="secondary-button"
-                    onClick={() => setProjectModalOpen(false)}
+                    onClick={() => {
+                      setProjectModalOpen(false);
+                      setEditingProject(null);
+                    }}
                   >
                     Cancel
                   </button>
@@ -634,7 +764,11 @@ function Dashboard() {
                     className="primary-button"
                     disabled={saving}
                   >
-                    {saving ? "Saving..." : "Save Project"}
+                    {saving
+                      ? "Saving..."
+                      : editingProject
+                        ? "Update Project"
+                        : "Save Project"}
                   </button>
                 </div>
               </form>
@@ -642,13 +776,13 @@ function Dashboard() {
           </div>
         )}
 
-        {/* Add Task Modal */}
+        {/* Create / Edit Task Modal */}
         {isTaskModalOpen && (
           <div className="modal-overlay">
             <div className="modal-card">
-              <h2>Add New Task</h2>
+              <h2>{editingTask ? "Edit Task" : "Add New Task"}</h2>
 
-              <form onSubmit={handleCreateTask}>
+              <form onSubmit={handleSaveTask}>
                 <div className="form-group">
                   <label htmlFor="task-title">Task title</label>
                   <input
@@ -699,11 +833,34 @@ function Dashboard() {
                   />
                 </div>
 
+                <div className="form-group">
+                  <label htmlFor="task-status">Status</label>
+                  <select
+                    id="task-status"
+                    value={taskForm.status}
+                    onChange={(event) =>
+                      setTaskForm({
+                        ...taskForm,
+                        status: event.target.value,
+                      })
+                    }
+                  >
+                    {statusOptions.map((status) => (
+                      <option key={status} value={status}>
+                        {status}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
                 <div className="modal-actions">
                   <button
                     type="button"
                     className="secondary-button"
-                    onClick={() => setTaskModalOpen(false)}
+                    onClick={() => {
+                      setTaskModalOpen(false);
+                      setEditingTask(null);
+                    }}
                   >
                     Cancel
                   </button>
@@ -713,7 +870,11 @@ function Dashboard() {
                     className="primary-button"
                     disabled={saving}
                   >
-                    {saving ? "Saving..." : "Save Task"}
+                    {saving
+                      ? "Saving..."
+                      : editingTask
+                        ? "Update Task"
+                        : "Save Task"}
                   </button>
                 </div>
               </form>
