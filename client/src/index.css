@@ -106,6 +106,15 @@ button:disabled {
   border: 1px solid rgba(148, 163, 184, 0.24);
   box-shadow: var(--shadow);
   color: white;
+
+  /* SIDEBAR CLICK FIX */
+  position: relative;
+  z-index: 10;
+  pointer-events: auto;
+}
+
+.sidebar-panel button {
+  pointer-events: auto;
 }
 
 .main-shell {
@@ -117,7 +126,7 @@ button:disabled {
   gap: 14px;
 
   position: relative;
-  z-index: 1;
+  z-index: 0;
 }
 
 /* =========================================
@@ -317,7 +326,6 @@ button:disabled {
 
   box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
 
-  /* Layering fix */
   position: relative;
   z-index: 1000;
   overflow: visible;
@@ -539,7 +547,7 @@ button:disabled {
   padding: 0 0 8px;
 
   position: relative;
-  z-index: 1;
+  z-index: 0;
 }
 
 .page-shell {
@@ -1374,7 +1382,7 @@ button:disabled {
   color: var(--text);
 }
 
-/* Fixed form layout */
+/* FIXED FORM LAYOUT */
 
 .form-group {
   display: flex;
@@ -1447,7 +1455,7 @@ button:disabled {
   margin-top: 22px;
 }
 
-/* Existing modal form support */
+/* EXISTING MODAL FORM SUPPORT */
 
 .modal-form {
   display: flex;

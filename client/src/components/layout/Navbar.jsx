@@ -1,6 +1,13 @@
 
 import { useState } from "react";
-import { Bell, FolderPlus, Plus, Search, X } from "lucide-react";
+import {
+  Bell,
+  FolderPlus,
+  Plus,
+  Search,
+  X,
+} from "lucide-react";
+import { useLocation } from "react-router-dom";
 
 function Navbar({
   activeTab,
@@ -11,8 +18,12 @@ function Navbar({
   const [searchText, setSearchText] = useState("");
   const [showNotifications, setShowNotifications] = useState(false);
 
-  // Show navbar only on Dashboard
-  if (activeTab !== "overview") {
+  const location = useLocation();
+
+  // Navbar should appear only on Overview
+  const isOverview = location.pathname === "/";
+
+  if (!isOverview) {
     return null;
   }
 
@@ -62,7 +73,9 @@ function Navbar({
           <button
             type="button"
             className="ghost-button"
-            onClick={() => setShowNotifications((current) => !current)}
+            onClick={() =>
+              setShowNotifications((current) => !current)
+            }
             aria-label="Notifications"
             title="Notifications"
           >
@@ -83,9 +96,12 @@ function Navbar({
             >
               <h3>Notifications</h3>
 
-              <p className="subtitle" style={{ marginTop: "10px" }}>
-                You're all caught up. New notifications will appear here
-                when notification support is added.
+              <p
+                className="subtitle"
+                style={{ marginTop: "10px" }}
+              >
+                You're all caught up. New notifications will
+                appear here when notification support is added.
               </p>
 
               <button

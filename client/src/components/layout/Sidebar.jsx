@@ -20,51 +20,67 @@ const iconMap = {
   insights: Sparkles,
 };
 
+const routeMap = {
+  overview: "/",
+  "task-list": "/tasks",
+  dependencies: "/dependencies",
+  simulator: "/simulator",
+  insights: "/analytics",
+};
+
 function Sidebar({ activeTab, setActiveTab }) {
   const navigate = useNavigate();
 
-  const hasInsights = navItems.some((item) => item.key === "insights");
-
   function handleNavigation(key) {
-    if (key === "insights") {
-      navigate("/analytics");
-      return;
-    }
+    const route = routeMap[key];
 
-    if (key === "overview") {
-      navigate("/");
-      return;
-    }
-
-    if (key === "task-list") {
-      navigate("/tasks");
-      return;
-    }
+    if (!route) return;
 
     setActiveTab(key);
+    navigate(route);
+  }
+
+  const sidebarItems = [...navItems];
+
+  // Ensure Analytics is visible in the sidebar
+  if (!sidebarItems.some((item) => item.key === "insights")) {
+    sidebarItems.push({
+      key: "insights",
+      label: "Analytics",
+    });
   }
 
   return (
     <aside className="sidebar-panel">
+      {/* Brand */}
       <div className="brand-row">
         <div className="brand-mark">P</div>
+
         <div className="brand-copy">
           <span className="eyebrow">Workspace</span>
           <strong>ProjectPulse</strong>
         </div>
       </div>
 
+      {/* Project selector label */}
       <div className="project-switcher">
-        <div className="project-switcher-label">Active Project</div>
-        <div className="project-switcher-value">Atlas Launch</div>
+        <div className="project-switcher-label">
+          Active Project
+        </div>
+
+        <div className="project-switcher-value">
+          Select a project
+        </div>
       </div>
 
+      {/* Navigation */}
       <nav className="sidebar-nav">
-        {navItems.map((item) => {
+        {sidebarItems.map((item) => {
           const Icon = iconMap[item.key];
-          const isActive = activeTab === item.key;
 
           if (!Icon) return null;
+
+          const isActive = activeTab === item.key;
 
           return (
             <button
@@ -74,27 +90,27 @@ function Sidebar({ activeTab, setActiveTab }) {
               onClick={() => handleNavigation(item.key)}
             >
               <Icon size={16} />
-              <span>{item.key === "insights" ? "Analytics" : item.label}</span>
+
+              <span>
+                {item.key === "insights"
+                  ? "Analytics"
+                  : item.label}
+              </span>
             </button>
           );
         })}
-
-        {!hasInsights && (
-          <button
-            type="button"
-            className={`nav-item ${activeTab === "insights" ? "active" : ""}`}
-            onClick={() => navigate("/analytics")}
-          >
-            <Sparkles size={16} />
-            <span>Analytics</span>
-          </button>
-        )}
       </nav>
 
+      {/* Footer */}
       <div className="sidebar-footer">
         <div className="mini-card">
-          <div className="mini-card-label">Delivery risk</div>
-          <div className="mini-card-value">Watchlist</div>
+          <div className="mini-card-label">
+            Delivery risk
+          </div>
+
+          <div className="mini-card-value">
+            Watchlist
+          </div>
         </div>
 
         <button
@@ -103,7 +119,10 @@ function Sidebar({ activeTab, setActiveTab }) {
           aria-label="Collapse sidebar"
         >
           <ChevronLeft size={14} />
-          <ChevronRight size={14} className="secondary-icon" />
+          <ChevronRight
+            size={14}
+            className="secondary-icon"
+          />
         </button>
       </div>
     </aside>
