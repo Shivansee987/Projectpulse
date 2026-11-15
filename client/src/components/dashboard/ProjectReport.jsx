@@ -1,6 +1,18 @@
 
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import {
+  FileText,
+  Download,
+  CheckCircle2,
+  ListTodo,
+  Clock3,
+  TrendingUp,
+  ShieldAlert,
+  GitBranch,
+  History,
+  CalendarDays,
+} from "lucide-react";
 
 function ProjectReport({
   project,
@@ -9,6 +21,28 @@ function ProjectReport({
   risks,
   history = [],
 }) {
+  const completed = tasks.filter((task) =>
+    ["done", "completed"].includes(
+      String(task.status || "").toLowerCase()
+    )
+  ).length;
+
+  const progress = tasks.length
+    ? Math.round((completed / tasks.length) * 100)
+    : 0;
+
+  const riskTasks = risks?.tasks || [];
+  const criticalTasks = cpm?.criticalPath || [];
+
+  const formatDate = (value) => {
+    if (!value) return "Not set";
+
+    const date = new Date(value);
+    return Number.isNaN(date.getTime())
+      ? "Not set"
+      : date.toLocaleDateString();
+  };
+
   const exportPDF = () => {
     if (!project) {
       alert("Please select a project first.");
@@ -18,57 +52,43 @@ function ProjectReport({
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
 
+    doc.setFillColor(20, 30, 55);
+    doc.rect(0, 0, pageWidth, 38, "F");
+
+    doc.setTextColor(255, 255, 255);
     doc.setFontSize(20);
     doc.setFont("helvetica", "bold");
-    doc.text("ProjectPulse - Project Report", 14, 20);
+    doc.text("ProjectPulse", 14, 16);
 
     doc.setFontSize(11);
     doc.setFont("helvetica", "normal");
-    doc.text(`Project: ${project.title || "Untitled"}`, 14, 32);
-    doc.text(
-      `Description: ${project.description || "No description"}`,
-      14,
-      40,
-      { maxWidth: pageWidth - 28 }
+    doc.text("PROJECT ANALYTICS REPORT", 14, 27);
+
+    doc.setTextColor(30, 40, 60);
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.text(project.title || "Untitled Project", 14, 50);
+
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    const description = doc.splitTextToSize(
+      project.description || "No description available",
+      pageWidth - 28
     );
+    doc.text(description, 14, 59);
 
-    doc.text(
-      `Start Date: ${
-        project.startDate
-          ? new Date(project.startDate).toLocaleDateString()
-          : "N/A"
-      }`,
-      14,
-      52
-    );
+    const infoY = 59 + description.length * 5 + 8;
 
-    doc.text(
-      `Deadline: ${
-        project.deadline
-          ? new Date(project.deadline).toLocaleDateString()
-          : "N/A"
-      }`,
-      14,
-      60
-    );
+    doc.text(`Start Date: ${formatDate(project.startDate)}`, 14, infoY);
+    doc.text(`Deadline: ${formatDate(project.deadline)}`, 14, infoY + 7);
 
-    const completed = tasks.filter(
-      (task) =>
-        ["done", "completed"].includes(
-          String(task.status || "").toLowerCase()
-        )
-    ).length;
-
-    const progress =
-      tasks.length > 0
-        ? Math.round((completed / tasks.length) * 100)
-        : 0;
+    let nextY = infoY + 18;
 
     doc.setFont("helvetica", "bold");
-    doc.text("Project Summary", 14, 74);
+    doc.text("Project Summary", 14, nextY);
 
     autoTable(doc, {
-      startY: 79,
+      startY: nextY + 5,
       head: [["Metric", "Value"]],
       body: [
         ["Total Tasks", tasks.length],
@@ -77,13 +97,19 @@ function ProjectReport({
         ["Project Duration", `${cpm?.projectDuration ?? "N/A"} days`],
       ],
       theme: "grid",
+      headStyles: { fillColor: [45, 65, 110] },
     });
 
-    doc.setFont("helvetica", "bold");
-    doc.text("Task Details", 14, doc.lastAutoTable.finalY + 12);
+    nextY = doc.lastAutoTable.finalY + 12;
+    if (nextY > 245) {
+      doc.addPage();
+      nextY = 20;
+    }
+
+    doc.text("Task Details", 14, nextY);
 
     autoTable(doc, {
-      startY: doc.lastAutoTable.finalY + 17,
+      startY: nextY + 5,
       head: [["Task", "Duration", "Status", "Assignee"]],
       body: tasks.map((task) => [
         task.title || "Untitled",
@@ -93,47 +119,39 @@ function ProjectReport({
       ]),
       theme: "striped",
       styles: { fontSize: 8 },
+      headStyles: { fillColor: [45, 65, 110] },
     });
 
-    let nextY = doc.lastAutoTable.finalY + 12;
-
-    if (nextY > 240) {
+    nextY = doc.lastAutoTable.finalY + 12;
+    if (nextY > 245) {
       doc.addPage();
       nextY = 20;
     }
 
-    doc.setFont("helvetica", "bold");
     doc.text("Critical Path", 14, nextY);
-
-    const criticalTasks = (cpm?.criticalPath || []).map(
-      (task) => [
-        task.title || "Untitled",
-        `${task.duration ?? 0} days`,
-        task.slack ?? 0,
-      ]
-    );
 
     autoTable(doc, {
       startY: nextY + 5,
       head: [["Task", "Duration", "Slack"]],
       body: criticalTasks.length
-        ? criticalTasks
+        ? criticalTasks.map((task) => [
+            task.title || "Untitled",
+            `${task.duration ?? 0} days`,
+            task.slack ?? 0,
+          ])
         : [["No critical path data available", "-", "-"]],
       theme: "grid",
       styles: { fontSize: 8 },
+      headStyles: { fillColor: [45, 65, 110] },
     });
 
     nextY = doc.lastAutoTable.finalY + 12;
-
-    if (nextY > 240) {
+    if (nextY > 245) {
       doc.addPage();
       nextY = 20;
     }
 
-    doc.setFont("helvetica", "bold");
     doc.text("Risk Analysis", 14, nextY);
-
-    const riskTasks = risks?.tasks || [];
 
     autoTable(doc, {
       startY: nextY + 5,
@@ -147,23 +165,25 @@ function ProjectReport({
         : [["No risk data available", "-", "-"]],
       theme: "grid",
       styles: { fontSize: 8 },
+      headStyles: { fillColor: [45, 65, 110] },
     });
 
     nextY = doc.lastAutoTable.finalY + 12;
-
-    if (nextY > 240) {
+    if (nextY > 245) {
       doc.addPage();
       nextY = 20;
     }
 
-    doc.setFont("helvetica", "bold");
     doc.text("Simulation History", 14, nextY);
 
     autoTable(doc, {
       startY: nextY + 5,
-      head: [
-        ["Task", "Original Duration", "Simulated Duration", "Change"],
-      ],
+      head: [[
+        "Task",
+        "Original Duration",
+        "Simulated Duration",
+        "Change",
+      ]],
       body: history.length
         ? history.map((item) => [
             item.taskTitle || "Untitled",
@@ -174,6 +194,7 @@ function ProjectReport({
         : [["No simulation history available", "-", "-", "-"]],
       theme: "striped",
       styles: { fontSize: 8 },
+      headStyles: { fillColor: [45, 65, 110] },
     });
 
     doc.save(
@@ -181,29 +202,471 @@ function ProjectReport({
     );
   };
 
+  const metrics = [
+    {
+      label: "Total Tasks",
+      value: tasks.length,
+      icon: ListTodo,
+      color: "blue",
+    },
+    {
+      label: "Completed",
+      value: completed,
+      icon: CheckCircle2,
+      color: "green",
+    },
+    {
+      label: "Critical Tasks",
+      value: criticalTasks.length,
+      icon: GitBranch,
+      color: "purple",
+    },
+    {
+      label: "Risk Items",
+      value: riskTasks.length,
+      icon: ShieldAlert,
+      color: "orange",
+    },
+  ];
+
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 mt-6">
-      <div className="flex flex-wrap justify-between items-center gap-3">
-        <div>
-          <h2 className="text-xl font-bold text-gray-800">
-            Project Report
-          </h2>
-          <p className="text-sm text-gray-500 mt-1">
-            Download a PDF report with project analytics.
-          </p>
+    <section className="project-report">
+      <div className="report-header">
+        <div className="report-heading">
+          <div className="report-icon">
+            <FileText size={22} />
+          </div>
+
+          <div>
+            <p className="report-eyebrow">PROJECT INSIGHTS</p>
+            <h2>Project Report</h2>
+            <p className="report-description">
+              Your project performance, delivery health and analytics in one place.
+            </p>
+          </div>
         </div>
 
         <button
+          type="button"
+          className="report-download"
           onClick={exportPDF}
           disabled={!project}
-          className="px-5 py-2.5 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:opacity-50"
         >
-          Download PDF Report
+          <Download size={17} />
+          Download PDF
         </button>
       </div>
-    </div>
+
+      <div className="report-project-info">
+        <div>
+          <span className="report-label">CURRENT PROJECT</span>
+          <h3>{project?.title || "No project selected"}</h3>
+          <p>
+            {project?.description || "Project description is not available."}
+          </p>
+        </div>
+
+        <div className="report-dates">
+          <div>
+            <CalendarDays size={16} />
+            <span>Start: {formatDate(project?.startDate)}</span>
+          </div>
+          <div>
+            <Clock3 size={16} />
+            <span>Deadline: {formatDate(project?.deadline)}</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="report-metrics">
+        {metrics.map((metric) => {
+          const Icon = metric.icon;
+
+          return (
+            <div
+              className={`report-metric report-${metric.color}`}
+              key={metric.label}
+            >
+              <div className="report-metric-icon">
+                <Icon size={19} />
+              </div>
+              <div>
+                <span>{metric.label}</span>
+                <strong>{metric.value}</strong>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="report-progress">
+        <div className="report-progress-heading">
+          <div>
+            <span className="report-label">DELIVERY PROGRESS</span>
+            <h3>Project completion</h3>
+          </div>
+          <strong>{progress}%</strong>
+        </div>
+
+        <div className="report-progress-track">
+          <div
+            className="report-progress-fill"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+
+        <p>
+          {completed} of {tasks.length} tasks completed
+        </p>
+      </div>
+
+      <div className="report-bottom-grid">
+        <div className="report-info-card">
+          <div className="report-small-icon purple">
+            <TrendingUp size={18} />
+          </div>
+          <div>
+            <span>Project Duration</span>
+            <strong>{cpm?.projectDuration ?? "N/A"} days</strong>
+          </div>
+        </div>
+
+        <div className="report-info-card">
+          <div className="report-small-icon orange">
+            <ShieldAlert size={18} />
+          </div>
+          <div>
+            <span>Risk Analysis</span>
+            <strong>{riskTasks.length} risk items</strong>
+          </div>
+        </div>
+
+        <div className="report-info-card">
+          <div className="report-small-icon blue">
+            <History size={18} />
+          </div>
+          <div>
+            <span>Simulation Records</span>
+            <strong>{history.length} records</strong>
+          </div>
+        </div>
+      </div>
+
+      <style>{`
+        .project-report {
+          margin-top: 24px;
+          padding: 26px;
+          border-radius: 22px;
+          background: var(--panel, #ffffff);
+          color: var(--text, #172033);
+          border: 1px solid var(--border, #e5e7eb);
+          box-shadow: var(--shadow, 0 10px 30px rgba(15,23,42,.06));
+          overflow: hidden;
+        }
+
+        :root[data-theme="dark"] .project-report {
+          background: #151d30;
+          color: #edf2ff;
+          border-color: #293750;
+        }
+
+        .report-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 18px;
+          margin-bottom: 24px;
+        }
+
+        .report-heading {
+          display: flex;
+          align-items: center;
+          gap: 14px;
+        }
+
+        .report-icon {
+          width: 48px;
+          height: 48px;
+          flex-shrink: 0;
+          display: grid;
+          place-items: center;
+          border-radius: 15px;
+          background: rgba(99,102,241,.12);
+          color: #818cf8;
+        }
+
+        .report-eyebrow,
+        .report-label {
+          display: block;
+          font-size: 10px;
+          font-weight: 800;
+          letter-spacing: 1.5px;
+          color: #818cf8;
+          margin-bottom: 5px;
+        }
+
+        .report-heading h2 {
+          font-size: 22px;
+          font-weight: 800;
+          margin: 0;
+          color: inherit;
+        }
+
+        .report-description {
+          font-size: 13px;
+          margin: 5px 0 0;
+          color: var(--muted, #778197);
+        }
+
+        .report-download {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 9px;
+          border: 0;
+          border-radius: 12px;
+          padding: 12px 18px;
+          background: linear-gradient(135deg, #6366f1, #4f46e5);
+          color: white;
+          font-size: 13px;
+          font-weight: 700;
+          cursor: pointer;
+          transition: transform .2s, box-shadow .2s;
+        }
+
+        .report-download:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 20px rgba(79,70,229,.3);
+        }
+
+        .report-download:disabled {
+          opacity: .5;
+          cursor: not-allowed;
+        }
+
+        .report-project-info {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 20px;
+          padding: 20px;
+          border-radius: 16px;
+          background: var(--surface, #f5f7fc);
+          border: 1px solid var(--border, #e5e7eb);
+        }
+
+        :root[data-theme="dark"] .report-project-info,
+        :root[data-theme="dark"] .report-info-card {
+          background: #101827;
+          border-color: #293750;
+        }
+
+        .report-project-info h3 {
+          margin: 5px 0;
+          font-size: 19px;
+          font-weight: 800;
+          color: inherit;
+        }
+
+        .report-project-info p {
+          margin: 0;
+          font-size: 13px;
+          color: var(--muted, #778197);
+          max-width: 500px;
+        }
+
+        .report-dates {
+          display: grid;
+          gap: 10px;
+          font-size: 12px;
+          color: var(--muted, #778197);
+        }
+
+        .report-dates div {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .report-metrics {
+          display: grid;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 13px;
+          margin-top: 18px;
+        }
+
+        .report-metric {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 16px;
+          min-width: 0;
+          border: 1px solid var(--border, #e5e7eb);
+          border-radius: 15px;
+          background: var(--surface, #f8fafc);
+        }
+
+        :root[data-theme="dark"] .report-metric {
+          background: #1b263b;
+          border-color: #2c3a54;
+        }
+
+        .report-metric-icon,
+        .report-small-icon {
+          width: 39px;
+          height: 39px;
+          flex-shrink: 0;
+          display: grid;
+          place-items: center;
+          border-radius: 12px;
+        }
+
+        .report-metric span,
+        .report-info-card span {
+          display: block;
+          font-size: 11px;
+          color: var(--muted, #778197);
+          margin-bottom: 5px;
+        }
+
+        .report-metric strong,
+        .report-info-card strong {
+          display: block;
+          font-size: 21px;
+          font-weight: 800;
+          color: inherit;
+        }
+
+        .report-blue .report-metric-icon,
+        .report-small-icon.blue {
+          color: #60a5fa;
+          background: rgba(59,130,246,.14);
+        }
+
+        .report-green .report-metric-icon {
+          color: #34d399;
+          background: rgba(16,185,129,.14);
+        }
+
+        .report-purple .report-metric-icon,
+        .report-small-icon.purple {
+          color: #a78bfa;
+          background: rgba(139,92,246,.14);
+        }
+
+        .report-orange .report-metric-icon,
+        .report-small-icon.orange {
+          color: #fb923c;
+          background: rgba(249,115,22,.14);
+        }
+
+        .report-progress {
+          margin-top: 20px;
+          padding: 20px;
+          border-radius: 16px;
+          background: var(--surface, #f5f7fc);
+          border: 1px solid var(--border, #e5e7eb);
+        }
+
+        :root[data-theme="dark"] .report-progress {
+          background: #101827;
+          border-color: #293750;
+        }
+
+        .report-progress-heading {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .report-progress-heading h3 {
+          margin: 5px 0 0;
+          font-size: 16px;
+          font-weight: 750;
+          color: inherit;
+        }
+
+        .report-progress-heading > strong {
+          font-size: 26px;
+          font-weight: 850;
+          color: #818cf8;
+        }
+
+        .report-progress-track {
+          height: 10px;
+          overflow: hidden;
+          border-radius: 20px;
+          margin-top: 18px;
+          background: var(--border, #e5e7eb);
+        }
+
+        .report-progress-fill {
+          height: 100%;
+          border-radius: inherit;
+          background: linear-gradient(90deg, #6366f1, #22c1a5);
+          transition: width .4s ease;
+        }
+
+        .report-progress > p {
+          margin: 9px 0 0;
+          font-size: 12px;
+          color: var(--muted, #778197);
+        }
+
+        .report-bottom-grid {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 13px;
+          margin-top: 16px;
+        }
+
+        .report-info-card {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 15px;
+          border: 1px solid var(--border, #e5e7eb);
+          border-radius: 15px;
+          background: var(--surface, #f8fafc);
+        }
+
+        .report-info-card strong {
+          font-size: 15px;
+        }
+
+        @media (max-width: 760px) {
+          .report-metrics {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
+
+          .report-bottom-grid {
+            grid-template-columns: 1fr;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .project-report {
+            padding: 17px;
+          }
+
+          .report-header {
+            align-items: stretch;
+          }
+
+          .report-download {
+            width: 100%;
+          }
+
+          .report-metrics {
+            grid-template-columns: 1fr;
+          }
+        }
+      `}</style>
+    </section>
   );
 }
 
 export default ProjectReport;
-

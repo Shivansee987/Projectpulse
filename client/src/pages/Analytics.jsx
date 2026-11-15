@@ -4,8 +4,10 @@ import {
   Activity,
   AlertCircle,
   AlertTriangle,
+  ArrowUpRight,
   BarChart3,
   CheckCircle2,
+  Clock3,
   FolderKanban,
   ListTodo,
   RefreshCw,
@@ -14,28 +16,33 @@ import {
   TrendingUp,
   Users,
   Zap,
+  HeartPulse,
 } from "lucide-react";
 
 import Layout from "../components/layout/Layout";
 import api from "../services/api";
 
-const styles = {
-  panel: {
-    background: "var(--panel, #ffffff)",
-    border: "1px solid var(--border, #e5e7eb)",
-    borderRadius: "18px",
-    padding: "22px",
-    minWidth: 0,
-  },
-  muted: {
-    color: "var(--muted, #64748b)",
-    fontSize: "13px",
-  },
-  heading: {
-    fontSize: "16px",
-    fontWeight: 700,
-    marginBottom: "18px",
-  },
+const colors = {
+  purple: "#7567F8",
+  blue: "#3B82F6",
+  green: "#16A36A",
+  orange: "#F59E0B",
+  red: "#EF4444",
+  gray: "#94A3B8",
+};
+
+const panel = {
+  background: "var(--a-panel)",
+  border: "1px solid var(--a-border)",
+  borderRadius: 18,
+  padding: 22,
+  minWidth: 0,
+  boxShadow: "0 5px 20px rgba(25,35,70,0.035)",
+};
+
+const muted = {
+  color: "var(--a-muted)",
+  fontSize: 12,
 };
 
 function getArray(data, keys = []) {
@@ -54,7 +61,7 @@ function getObject(data) {
 }
 
 function normalizeStatus(status = "") {
-  const value = String(status).toLowerCase();
+  const value = String(status).toLowerCase().trim();
 
   if (["done", "completed", "complete"].includes(value)) {
     return "completed";
@@ -85,70 +92,249 @@ function formatDate(date) {
   });
 }
 
-function MetricCard({ icon: Icon, label, value, detail, color }) {
+function SectionTitle({ icon: Icon, title, subtitle }) {
   return (
-    <div style={styles.panel}>
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
+    <div style={{ marginBottom: 20 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
+        <Icon size={19} color={colors.purple} />
+
+        <h3
+          style={{
+            fontSize: 16,
+            fontWeight: 750,
+            margin: 0,
+            color: "var(--a-text)",
+          }}
+        >
+          {title}
+        </h3>
+      </div>
+
+      {subtitle && (
+        <p style={{ ...muted, margin: "7px 0 0" }}>{subtitle}</p>
+      )}
+    </div>
+  );
+}
+
+function MetricCard({
+  icon: Icon,
+  label,
+  value,
+  detail,
+  color,
+  percentage,
+}) {
+  return (
+    <div
+      style={{
+        ...panel,
+        position: "relative",
+        overflow: "hidden",
+        padding: 20,
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          gap: 12,
+        }}
+      >
         <div>
-          <p style={styles.muted}>{label}</p>
-          <h2 style={{ fontSize: "28px", margin: "10px 0 5px", fontWeight: 750 }}>
+          <p style={{ ...muted, fontWeight: 600 }}>{label}</p>
+
+          <h2
+            style={{
+              fontSize: 30,
+              fontWeight: 800,
+              letterSpacing: "-1px",
+              margin: "12px 0 5px",
+              color: "var(--a-text)",
+            }}
+          >
             {value}
           </h2>
-          <p style={styles.muted}>{detail}</p>
+
+          <p style={muted}>{detail}</p>
         </div>
 
         <div
           style={{
-            width: 42,
-            height: 42,
-            borderRadius: 13,
+            width: 44,
+            height: 44,
+            borderRadius: 14,
+            background: `${color}20`,
+            color,
             display: "grid",
             placeItems: "center",
-            color,
-            background: `${color}18`,
-            flexShrink: 0,
           }}
         >
           <Icon size={21} />
         </div>
       </div>
+
+      {percentage !== undefined && (
+        <div
+          style={{
+            height: 5,
+            borderRadius: 10,
+            background: "var(--a-border)",
+            marginTop: 17,
+            overflow: "hidden",
+          }}
+        >
+          <div
+            style={{
+              width: `${Math.min(100, Math.max(0, percentage))}%`,
+              height: "100%",
+              background: color,
+              borderRadius: 10,
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 }
 
-function ProgressBar({ label, value, color }) {
+function ProgressBar({ label, value, color, detail }) {
+  const safeValue = Math.min(100, Math.max(0, Number(value) || 0));
+
   return (
-    <div style={{ marginBottom: 17 }}>
+    <div style={{ marginBottom: 18 }}>
       <div
         style={{
           display: "flex",
           justifyContent: "space-between",
+          gap: 10,
           marginBottom: 8,
-          gap: 12,
           fontSize: 13,
+          color: "var(--a-text)",
         }}
       >
-        <span>{label}</span>
-        <strong>{value}%</strong>
+        <div>
+          <strong style={{ fontWeight: 650 }}>{label}</strong>
+
+          {detail && (
+            <span style={{ ...muted, marginLeft: 7 }}>{detail}</span>
+          )}
+        </div>
+
+        <strong>{safeValue}%</strong>
       </div>
 
       <div
         style={{
           height: 9,
           borderRadius: 20,
-          background: "var(--border, #e5e7eb)",
+          background: "var(--a-border)",
           overflow: "hidden",
         }}
       >
         <div
           style={{
-            width: `${Math.min(100, Math.max(0, value))}%`,
+            width: `${safeValue}%`,
             height: "100%",
             background: color,
             borderRadius: 20,
-            transition: "width 0.3s ease",
+            transition: "width .4s ease",
           }}
         />
+      </div>
+    </div>
+  );
+}
+
+function DonutChart({ items, total }) {
+  const values = items.map((item) => item.value);
+  const sum = values.reduce((a, b) => a + b, 0);
+
+  let current = 0;
+
+  const gradient = sum
+    ? items
+        .map((item) => {
+          const start = current;
+          current += (item.value / sum) * 100;
+          return `${item.color} ${start}% ${current}%`;
+        })
+        .join(", ")
+    : "#64748b 0% 100%";
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 28,
+        flexWrap: "wrap",
+      }}
+    >
+      <div
+        style={{
+          width: 174,
+          height: 174,
+          borderRadius: "50%",
+          background: `conic-gradient(${gradient})`,
+          display: "grid",
+          placeItems: "center",
+          flexShrink: 0,
+        }}
+      >
+        <div
+          style={{
+            width: 125,
+            height: 125,
+            background: "var(--a-panel)",
+            borderRadius: "50%",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <strong style={{ fontSize: 31, color: "var(--a-text)" }}>
+            {total}
+          </strong>
+
+          <span style={muted}>Total tasks</span>
+        </div>
+      </div>
+
+      <div style={{ display: "grid", gap: 14, minWidth: 145 }}>
+        {items.map((item) => (
+          <div
+            key={item.label}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 18,
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span
+                style={{
+                  width: 10,
+                  height: 10,
+                  borderRadius: 3,
+                  background: item.color,
+                }}
+              />
+
+              <span style={{ fontSize: 13, color: "var(--a-text)" }}>
+                {item.label}
+              </span>
+            </div>
+
+            <strong style={{ fontSize: 13, color: "var(--a-text)" }}>
+              {item.value}
+            </strong>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -176,7 +362,7 @@ function Analytics() {
 
       setProjects(list);
 
-      if (list.length > 0) {
+      if (list.length) {
         setSelectedProject((current) =>
           list.some((project) => project.id === current)
             ? current
@@ -216,7 +402,7 @@ function Analytics() {
         setTasks(getArray(taskResult.value.data, ["tasks", "data"]));
       } else {
         setTasks([]);
-        setError("Tasks could not be loaded. Other analytics may still be available.");
+        setError("Tasks could not be loaded.");
       }
 
       setCpm(
@@ -283,10 +469,13 @@ function Analytics() {
       : 0;
 
     const overdue = tasks.filter((task) => {
-      if (!task.deadline && !task.dueDate) return false;
-      if (normalizeStatus(task.status) === "completed") return false;
+      const deadline = task.deadline || task.dueDate;
 
-      const due = new Date(task.deadline || task.dueDate);
+      if (!deadline || normalizeStatus(task.status) === "completed") {
+        return false;
+      }
+
+      const due = new Date(deadline);
 
       return !Number.isNaN(due.getTime()) && due < new Date();
     });
@@ -294,7 +483,11 @@ function Analytics() {
     const workload = {};
 
     tasks.forEach((task) => {
-      const name = task.assignee || "Unassigned";
+      const name =
+        typeof task.assignee === "object"
+          ? task.assignee?.name || "Unassigned"
+          : task.assignee || "Unassigned";
+
       workload[name] = (workload[name] || 0) + 1;
     });
 
@@ -302,13 +495,8 @@ function Analytics() {
       (a, b) => b[1] - a[1]
     );
 
-    const cpmTasks = Array.isArray(cpm?.tasks)
-      ? cpm.tasks
-      : [];
-
-    const criticalSource = cpmTasks.length
-      ? cpmTasks
-      : tasks;
+    const cpmTasks = Array.isArray(cpm?.tasks) ? cpm.tasks : [];
+    const criticalSource = cpmTasks.length ? cpmTasks : tasks;
 
     const criticalTasks = criticalSource.filter(
       (task) => Number(task.slack) <= 0
@@ -324,6 +512,7 @@ function Analytics() {
       overdue,
       team,
       criticalTasks,
+      remaining: total - completed,
     };
   }, [tasks, cpm]);
 
@@ -340,8 +529,6 @@ function Analytics() {
     );
   }, [risks]);
 
-  const riskSummary = risks?.riskSummary || {};
-
   const insightList = useMemo(() => {
     if (Array.isArray(insights)) return insights;
 
@@ -353,19 +540,112 @@ function Analytics() {
     );
   }, [insights]);
 
+  const riskSummary = risks?.riskSummary || {};
+
+  const distribution = [
+    { label: "Completed", value: analytics.completed, color: colors.green },
+    { label: "In progress", value: analytics.inProgress, color: colors.blue },
+    { label: "At risk", value: analytics.atRisk, color: colors.red },
+    { label: "Not started", value: analytics.notStarted, color: colors.gray },
+  ];
+
   const cpmSummary = cpm?.summary || cpm?.data || cpm || {};
 
+  const healthScore = analytics.total
+    ? Math.max(
+        0,
+        Math.min(
+          100,
+          Math.round(
+            analytics.progress -
+              analytics.overdue.length * 5 -
+              analytics.atRisk * 3
+          )
+        )
+      )
+    : 0;
+
+  const healthLabel =
+    !analytics.total
+      ? "No data"
+      : healthScore >= 80
+      ? "Healthy"
+      : healthScore >= 55
+      ? "Needs attention"
+      : "At risk";
+
+  const healthColor =
+    healthScore >= 80
+      ? colors.green
+      : healthScore >= 55
+      ? colors.orange
+      : colors.red;
+
   const refresh = () => {
-    if (selectedProject) {
-      loadAnalytics(selectedProject);
-    } else {
-      loadProjects();
-    }
+    if (selectedProject) loadAnalytics(selectedProject);
+    else loadProjects();
   };
 
   return (
     <Layout activeTab="insights" setActiveTab={() => {}}>
-      <div className="page-shell">
+      <div className="page-shell analytics-theme">
+        <style>{`
+          .analytics-theme {
+            --a-panel: #ffffff;
+            --a-surface: #f8fafc;
+            --a-border: #e2e8f0;
+            --a-text: #1e293b;
+            --a-muted: #718096;
+            color: var(--a-text);
+            max-width: 1600px;
+            margin: 0 auto;
+          }
+
+          :root[data-theme="dark"] .analytics-theme {
+            --a-panel: #172033;
+            --a-surface: #202c40;
+            --a-border: #334155;
+            --a-text: #f1f5f9;
+            --a-muted: #94a3b8;
+          }
+
+          .analytics-theme select {
+            background: var(--a-panel) !important;
+            color: var(--a-text) !important;
+            border-color: var(--a-border) !important;
+          }
+
+          .analytics-theme select option {
+            background: var(--a-panel);
+            color: var(--a-text);
+          }
+
+          .analytics-theme .analytics-surface {
+            background: var(--a-surface) !important;
+            color: var(--a-text) !important;
+            border-color: var(--a-border) !important;
+          }
+
+          .analytics-theme .analytics-warning {
+            background: #fef2f2 !important;
+            color: #991b1b !important;
+          }
+
+          :root[data-theme="dark"] .analytics-theme .analytics-warning {
+            background: #451f2b !important;
+            color: #fecaca !important;
+          }
+
+          .analytics-theme button {
+            transition: all .2s ease;
+          }
+
+          @media(max-width: 600px) {
+            .analytics-theme {
+              padding: 0 2px;
+            }
+          }
+        `}</style>
 
         {/* Header */}
         <div
@@ -373,20 +653,35 @@ function Analytics() {
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            gap: 16,
+            gap: 18,
             flexWrap: "wrap",
             marginBottom: 25,
           }}
         >
           <div>
-            <p className="eyebrow">PROJECT INTELLIGENCE</p>
+            <p
+              style={{
+                color: colors.purple,
+                fontSize: 11,
+                fontWeight: 800,
+                letterSpacing: 2,
+              }}
+            >
+              PROJECT INTELLIGENCE CENTER
+            </p>
 
-            <h1 style={{ fontSize: "2rem", marginTop: 7 }}>
-              Advanced Analytics
+            <h1
+              style={{
+                fontSize: "clamp(25px, 3vw, 34px)",
+                margin: "8px 0",
+                color: "var(--a-text)",
+              }}
+            >
+              Advanced Overview
             </h1>
 
-            <p className="subtitle" style={{ marginTop: 7 }}>
-              Understand progress, identify risks, and make better project decisions.
+            <p style={{ ...muted, fontSize: 13 }}>
+              Your project performance, team activity and delivery insights.
             </p>
           </div>
 
@@ -394,153 +689,209 @@ function Analytics() {
             onClick={refresh}
             disabled={loading || detailsLoading}
             style={{
-              padding: "11px 17px",
-              borderRadius: 11,
-              border: "1px solid var(--border, #e5e7eb)",
-              background: "var(--panel, white)",
               display: "flex",
               alignItems: "center",
-              gap: 8,
+              gap: 9,
+              padding: "11px 17px",
+              borderRadius: 11,
+              border: "1px solid var(--a-border)",
+              background: "var(--a-panel)",
+              color: "var(--a-text)",
               cursor: "pointer",
+              fontWeight: 650,
             }}
           >
             <RefreshCw size={16} />
-            Refresh
+            Refresh data
           </button>
         </div>
 
         {/* Project selector */}
-        <div style={{ ...styles.panel, marginBottom: 22 }}>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 13,
-              flexWrap: "wrap",
-            }}
-          >
-            <FolderKanban size={22} />
-
-            <div style={{ flex: 1, minWidth: 180 }}>
-              <strong>Choose a project</strong>
-              <p style={styles.muted}>
-                Analytics are calculated for the selected project.
-              </p>
-            </div>
-
-            <select
-              value={selectedProject}
-              onChange={(event) => setSelectedProject(event.target.value)}
-              disabled={loading || projects.length === 0}
+        <div
+          style={{
+            ...panel,
+            marginBottom: 22,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: 16,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 13 }}>
+            <div
               style={{
-                minWidth: 220,
-                padding: "11px 13px",
-                borderRadius: 10,
-                border: "1px solid var(--border, #e5e7eb)",
-                background: "var(--panel, white)",
-                color: "inherit",
+                width: 43,
+                height: 43,
+                display: "grid",
+                placeItems: "center",
+                background: `${colors.purple}20`,
+                color: colors.purple,
+                borderRadius: 13,
               }}
             >
-              {projects.length === 0 && (
-                <option value="">No projects available</option>
-              )}
+              <FolderKanban size={21} />
+            </div>
 
-              {projects.map((project) => (
-                <option key={project.id} value={project.id}>
-                  {project.title}
-                </option>
-              ))}
-            </select>
+            <div>
+              <strong>Project overview</strong>
+              <p style={{ ...muted, marginTop: 4 }}>
+                Select a project to explore its performance.
+              </p>
+            </div>
           </div>
+
+          <select
+            value={selectedProject}
+            onChange={(event) => setSelectedProject(event.target.value)}
+            disabled={loading || projects.length === 0}
+            style={{
+              minWidth: 220,
+              maxWidth: "100%",
+              padding: "11px 14px",
+              borderRadius: 10,
+              border: "1px solid var(--a-border)",
+              background: "var(--a-panel)",
+              color: "var(--a-text)",
+            }}
+          >
+            {projects.length === 0 && (
+              <option value="">No projects available</option>
+            )}
+
+            {projects.map((project) => (
+              <option key={project.id} value={project.id}>
+                {project.title}
+              </option>
+            ))}
+          </select>
         </div>
 
         {loading ? (
-          <div style={styles.panel}>Loading your projects...</div>
+          <div style={panel}>Loading your projects...</div>
         ) : error && projects.length === 0 ? (
-          <div style={styles.panel}>
-            <AlertCircle color="#ef4444" />
+          <div style={panel}>
+            <AlertCircle color={colors.red} />
             <p style={{ marginTop: 10 }}>{error}</p>
-
             <button onClick={loadProjects} style={{ marginTop: 12 }}>
               Try again
             </button>
           </div>
         ) : projects.length === 0 ? (
-          <div style={styles.panel}>
-            <FolderKanban size={30} />
-            <h3 style={{ marginTop: 12 }}>No projects yet</h3>
-            <p style={styles.muted}>
-              Create a project first. Its analytics will appear here.
-            </p>
+          <div style={{ ...panel, textAlign: "center", padding: 45 }}>
+            <FolderKanban size={36} color={colors.purple} />
+            <h3 style={{ marginTop: 14 }}>No projects yet</h3>
+            <p style={muted}>Create a project to see its analytics here.</p>
           </div>
         ) : (
           <>
             {error && (
-              <p style={{ color: "#dc2626", marginBottom: 15 }}>
-                {error}
-              </p>
+              <p style={{ color: colors.red, marginBottom: 15 }}>{error}</p>
             )}
 
-            {/* Project overview */}
-            <div style={{ ...styles.panel, marginBottom: 22 }}>
+            {/* Hero project card */}
+            <div
+              style={{
+                ...panel,
+                marginBottom: 22,
+                padding: 25,
+                background:
+                  "linear-gradient(115deg, #25234d 0%, #4841a2 58%, #7567f8 100%)",
+                color: "white",
+                border: "none",
+                position: "relative",
+                overflow: "hidden",
+              }}
+            >
               <div
                 style={{
                   display: "flex",
                   justifyContent: "space-between",
-                  gap: 15,
+                  alignItems: "center",
                   flexWrap: "wrap",
+                  gap: 20,
                 }}
               >
                 <div>
-                  <p style={styles.muted}>SELECTED PROJECT</p>
+                  <p
+                    style={{
+                      fontSize: 10,
+                      letterSpacing: 2,
+                      color: "#d6d2ff",
+                      fontWeight: 750,
+                    }}
+                  >
+                    CURRENTLY SELECTED PROJECT
+                  </p>
 
-                  <h2 style={{ fontSize: 22, marginTop: 6 }}>
+                  <h2 style={{ fontSize: 25, margin: "10px 0" }}>
                     {selectedProjectData?.title || "Project"}
                   </h2>
 
-                  <p style={{ ...styles.muted, marginTop: 7 }}>
+                  <p style={{ color: "#dedcff", fontSize: 12 }}>
                     Deadline: {formatDate(selectedProjectData?.deadline)}
                   </p>
                 </div>
 
-                <div style={{ textAlign: "right" }}>
-                  <p style={styles.muted}>COMPLETION</p>
-
-                  <h2 style={{ fontSize: 32, marginTop: 4 }}>
+                <div
+                  style={{
+                    width: 112,
+                    height: 112,
+                    borderRadius: "50%",
+                    border: "7px solid rgba(255,255,255,.2)",
+                    borderTopColor: "#ffffff",
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "center",
+                    alignItems: "center",
+                  }}
+                >
+                  <strong style={{ fontSize: 27 }}>
                     {analytics.progress}%
-                  </h2>
+                  </strong>
+
+                  <span style={{ fontSize: 10, color: "#e2e0ff" }}>
+                    COMPLETED
+                  </span>
                 </div>
               </div>
 
               <div
                 style={{
-                  height: 11,
-                  background: "var(--border, #e5e7eb)",
+                  height: 9,
+                  background: "rgba(255,255,255,.2)",
                   borderRadius: 20,
                   overflow: "hidden",
-                  marginTop: 20,
+                  marginTop: 23,
                 }}
               >
                 <div
                   style={{
-                    height: "100%",
                     width: `${analytics.progress}%`,
-                    background: "#16a34a",
+                    height: "100%",
+                    background: "#ffffff",
                     borderRadius: 20,
+                    transition: "width .4s ease",
                   }}
                 />
               </div>
 
-              <p style={{ ...styles.muted, marginTop: 9 }}>
+              <p
+                style={{
+                  color: "#e2e0ff",
+                  fontSize: 12,
+                  marginTop: 10,
+                }}
+              >
                 {analytics.completed} of {analytics.total} tasks completed
               </p>
             </div>
 
-            {/* Metric cards */}
+            {/* KPI Cards */}
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+                gridTemplateColumns: "repeat(auto-fit, minmax(175px, 1fr))",
                 gap: 15,
                 marginBottom: 22,
               }}
@@ -550,7 +901,7 @@ function Analytics() {
                 label="Total tasks"
                 value={analytics.total}
                 detail="Tasks in this project"
-                color="#6366f1"
+                color={colors.purple}
               />
 
               <MetricCard
@@ -558,142 +909,354 @@ function Analytics() {
                 label="Completed"
                 value={analytics.completed}
                 detail="Successfully finished"
-                color="#16a34a"
+                color={colors.green}
+                percentage={analytics.progress}
               />
 
               <MetricCard
                 icon={Activity}
                 label="In progress"
                 value={analytics.inProgress}
-                detail="Currently being worked on"
-                color="#2563eb"
+                detail="Currently active"
+                color={colors.blue}
               />
 
               <MetricCard
                 icon={AlertTriangle}
-                label="At risk"
-                value={analytics.atRisk + analytics.overdue.length}
-                detail="At-risk or overdue tasks"
-                color="#dc2626"
+                label="Overdue"
+                value={analytics.overdue.length}
+                detail="Past their due date"
+                color={colors.red}
+              />
+
+              <MetricCard
+                icon={Target}
+                label="Remaining"
+                value={analytics.remaining}
+                detail="Tasks left to finish"
+                color={colors.orange}
               />
             </div>
 
-            {/* Charts */}
+            {/* Task distribution and Project health */}
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+                gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
                 gap: 18,
                 marginBottom: 22,
               }}
             >
-              <div style={styles.panel}>
-                <h3 style={styles.heading}>
-                  <BarChart3
-                    size={18}
-                    style={{ verticalAlign: "middle", marginRight: 8 }}
-                  />
-                  Task distribution
-                </h3>
+              <div style={panel}>
+                <SectionTitle
+                  icon={BarChart3}
+                  title="Task distribution"
+                  subtitle="Breakdown of current task statuses"
+                />
 
-                {analytics.total === 0 ? (
-                  <p style={styles.muted}>
-                    Add tasks to see the distribution.
-                  </p>
+                {detailsLoading ? (
+                  <p style={muted}>Updating chart...</p>
+                ) : analytics.total ? (
+                  <DonutChart items={distribution} total={analytics.total} />
                 ) : (
-                  <>
-                    <ProgressBar
-                      label="Completed"
-                      value={Math.round(
-                        (analytics.completed / analytics.total) * 100
-                      )}
-                      color="#16a34a"
-                    />
-
-                    <ProgressBar
-                      label="In progress"
-                      value={Math.round(
-                        (analytics.inProgress / analytics.total) * 100
-                      )}
-                      color="#2563eb"
-                    />
-
-                    <ProgressBar
-                      label="At risk"
-                      value={Math.round(
-                        (analytics.atRisk / analytics.total) * 100
-                      )}
-                      color="#dc2626"
-                    />
-
-                    <ProgressBar
-                      label="Not started"
-                      value={Math.round(
-                        (analytics.notStarted / analytics.total) * 100
-                      )}
-                      color="#94a3b8"
-                    />
-                  </>
+                  <p style={muted}>Add tasks to view task distribution.</p>
                 )}
               </div>
 
-              <div style={styles.panel}>
-                <h3 style={styles.heading}>
-                  <ShieldCheck
-                    size={18}
-                    style={{ verticalAlign: "middle", marginRight: 8 }}
-                  />
-                  Project health
-                </h3>
+              {/* PROJECT HEALTH */}
+              <div style={panel}>
+                <SectionTitle
+                  icon={ShieldCheck}
+                  title="Project Health"
+                  subtitle="Overall delivery and schedule health"
+                />
 
-                <div style={{ display: "grid", gap: 16 }}>
-                  <div>
-                    <p style={styles.muted}>Overdue tasks</p>
-                    <h2 style={{ fontSize: 27, color: "#dc2626", marginTop: 5 }}>
-                      {analytics.overdue.length}
-                    </h2>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 18,
+                    padding: 17,
+                    borderRadius: 15,
+                    background: "var(--a-surface)",
+                    border: "1px solid var(--a-border)",
+                    marginBottom: 18,
+                  }}
+                >
+                  <div
+                    style={{
+                      width: 76,
+                      height: 76,
+                      borderRadius: "50%",
+                      background: `conic-gradient(${healthColor} ${healthScore}%, var(--a-border) 0)`,
+                      display: "grid",
+                      placeItems: "center",
+                      flexShrink: 0,
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: 60,
+                        height: 60,
+                        borderRadius: "50%",
+                        background: "var(--a-panel)",
+                        display: "grid",
+                        placeItems: "center",
+                        fontWeight: 800,
+                        fontSize: 18,
+                        color: "var(--a-text)",
+                      }}
+                    >
+                      {healthScore}
+                    </div>
                   </div>
 
                   <div>
-                    <p style={styles.muted}>Critical-path tasks</p>
-                    <h2 style={{ fontSize: 27, marginTop: 5 }}>
-                      {analytics.criticalTasks.length}
-                    </h2>
-                  </div>
+                    <p style={muted}>Health score</p>
 
-                  <div>
-                    <p style={styles.muted}>Remaining tasks</p>
-                    <h2 style={{ fontSize: 27, marginTop: 5 }}>
-                      {analytics.total - analytics.completed}
+                    <h2
+                      style={{
+                        fontSize: 23,
+                        fontWeight: 800,
+                        color: healthColor,
+                        margin: "4px 0",
+                      }}
+                    >
+                      {healthLabel}
                     </h2>
+
+                    <p style={muted}>
+                      Based on completion, overdue and at-risk tasks
+                    </p>
                   </div>
+                </div>
+
+                <div style={{ display: "grid", gap: 11 }}>
+                  {[
+                    {
+                      label: "Completion rate",
+                      value: `${analytics.progress}%`,
+                      color: colors.green,
+                      icon: CheckCircle2,
+                    },
+                    {
+                      label: "Overdue tasks",
+                      value: analytics.overdue.length,
+                      color: colors.red,
+                      icon: Clock3,
+                    },
+                    {
+                      label: "At-risk tasks",
+                      value: analytics.atRisk,
+                      color: colors.orange,
+                      icon: AlertTriangle,
+                    },
+                    {
+                      label: "Critical path tasks",
+                      value: analytics.criticalTasks.length,
+                      color: colors.purple,
+                      icon: Target,
+                    },
+                  ].map((item) => (
+                    <div
+                      key={item.label}
+                      className="analytics-surface"
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: 12,
+                        padding: 13,
+                        borderRadius: 12,
+                        border: "1px solid var(--a-border)",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 10,
+                        }}
+                      >
+                        <item.icon size={18} color={item.color} />
+                        <span style={{ fontSize: 13 }}>{item.label}</span>
+                      </div>
+
+                      <strong style={{ fontSize: 18, color: item.color }}>
+                        {item.value}
+                      </strong>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
 
-            {/* Risk monitoring */}
-            <div style={{ ...styles.panel, marginBottom: 22 }}>
-              <h3 style={styles.heading}>
-                <AlertTriangle
-                  size={18}
-                  style={{
-                    verticalAlign: "middle",
-                    marginRight: 8,
-                    color: "#dc2626",
-                  }}
+            {/* Team workload and Schedule */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+                gap: 18,
+                marginBottom: 22,
+              }}
+            >
+              <div style={panel}>
+                <SectionTitle
+                  icon={Users}
+                  title="Team workload"
+                  subtitle="Task distribution by assignee"
                 />
-                Risk monitoring
-              </h3>
+
+                {analytics.team.length === 0 ? (
+                  <p style={muted}>No task assignees found.</p>
+                ) : (
+                  analytics.team.map(([name, count], index) => (
+                    <ProgressBar
+                      key={name}
+                      label={name}
+                      detail={`${count} tasks`}
+                      value={
+                        analytics.total
+                          ? Math.round((count / analytics.total) * 100)
+                          : 0
+                      }
+                      color={
+                        [
+                          colors.purple,
+                          colors.blue,
+                          colors.green,
+                          colors.orange,
+                        ][index % 4]
+                      }
+                    />
+                  ))
+                )}
+              </div>
+
+              <div style={panel}>
+                <SectionTitle
+                  icon={Target}
+                  title="Schedule intelligence"
+                  subtitle="Critical path and project duration"
+                />
+
+                {detailsLoading ? (
+                  <p style={muted}>Loading schedule analysis...</p>
+                ) : cpm ? (
+                  <>
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "1fr 1fr",
+                        gap: 12,
+                      }}
+                    >
+                      <div
+                        className="analytics-surface"
+                        style={{
+                          borderRadius: 13,
+                          padding: 16,
+                          border: "1px solid var(--a-border)",
+                        }}
+                      >
+                        <p style={muted}>Project duration</p>
+
+                        <h2 style={{ fontSize: 26, marginTop: 8 }}>
+                          {cpm.projectDuration ??
+                            cpmSummary.projectDuration ??
+                            cpmSummary.totalDuration ??
+                            cpmSummary.duration ??
+                            "—"}
+
+                          <span style={{ fontSize: 12, fontWeight: 500 }}>
+                            {" "}days
+                          </span>
+                        </h2>
+                      </div>
+
+                      <div
+                        className="analytics-surface"
+                        style={{
+                          borderRadius: 13,
+                          padding: 16,
+                          border: "1px solid var(--a-border)",
+                        }}
+                      >
+                        <p style={muted}>Critical tasks</p>
+
+                        <h2
+                          style={{
+                            fontSize: 26,
+                            marginTop: 8,
+                            color: colors.red,
+                          }}
+                        >
+                          {Array.isArray(cpm.criticalPath)
+                            ? cpm.criticalPath.length
+                            : analytics.criticalTasks.length}
+                        </h2>
+                      </div>
+                    </div>
+
+                    {analytics.criticalTasks.length > 0 && (
+                      <div style={{ marginTop: 18 }}>
+                        <strong style={{ fontSize: 13 }}>
+                          Critical path tasks
+                        </strong>
+
+                        {analytics.criticalTasks.map((task, index) => (
+                          <div
+                            key={task.taskId || task.id || index}
+                            className="analytics-surface"
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "center",
+                              gap: 10,
+                              marginTop: 10,
+                              padding: 11,
+                              borderRadius: 10,
+                              border: "1px solid var(--a-border)",
+                            }}
+                          >
+                            <span style={{ fontSize: 12 }}>
+                              {task.title || task.taskTitle || "Project task"}
+                            </span>
+
+                            <span style={{ color: colors.red, fontSize: 11 }}>
+                              Slack: {task.slack}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <p style={muted}>
+                    CPM analysis is currently unavailable.
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* RISK ANALYSIS */}
+            <div style={{ ...panel, marginBottom: 22 }}>
+              <SectionTitle
+                icon={AlertTriangle}
+                title="Risk Analysis"
+                subtitle="Identify potential project risks and delivery delays"
+              />
 
               {detailsLoading ? (
-                <p style={styles.muted}>Checking project risks...</p>
+                <p style={muted}>Checking project risks...</p>
               ) : (
                 <>
                   <div
                     style={{
                       display: "grid",
-                      gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))",
-                      gap: 12,
+                      gridTemplateColumns:
+                        "repeat(auto-fit, minmax(130px, 1fr))",
+                      gap: 13,
                       marginBottom: 20,
                     }}
                   >
@@ -701,34 +1264,55 @@ function Analytics() {
                       {
                         label: "High risk",
                         value: riskSummary.high ?? 0,
-                        color: "#dc2626",
+                        color: colors.red,
+                        icon: AlertCircle,
                       },
                       {
                         label: "Medium risk",
                         value: riskSummary.medium ?? 0,
-                        color: "#d97706",
+                        color: colors.orange,
+                        icon: AlertTriangle,
                       },
                       {
                         label: "Low risk",
                         value: riskSummary.low ?? 0,
-                        color: "#16a34a",
+                        color: colors.green,
+                        icon: ShieldCheck,
+                      },
+                      {
+                        label: "Overdue",
+                        value: analytics.overdue.length,
+                        color: colors.red,
+                        icon: Clock3,
                       },
                     ].map((item) => (
                       <div
                         key={item.label}
+                        className="analytics-surface"
                         style={{
-                          padding: 15,
-                          borderRadius: 12,
-                          background: "var(--surface, #f8fafc)",
+                          padding: 17,
+                          borderRadius: 14,
+                          border: "1px solid var(--a-border)",
                         }}
                       >
-                        <p style={styles.muted}>{item.label}</p>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            gap: 8,
+                          }}
+                        >
+                          <p style={muted}>{item.label}</p>
+                          <item.icon size={17} color={item.color} />
+                        </div>
 
                         <h2
                           style={{
-                            fontSize: 27,
+                            fontSize: 29,
+                            marginTop: 10,
                             color: item.color,
-                            marginTop: 6,
+                            fontWeight: 800,
                           }}
                         >
                           {item.value}
@@ -737,49 +1321,108 @@ function Analytics() {
                     ))}
                   </div>
 
-                  <p style={{ ...styles.muted, marginBottom: 12 }}>
-                    Risk assessment for {risks?.totalTasks ?? analytics.total} tasks
-                    {risks?.projectDuration != null
-                      ? ` · Project duration: ${risks.projectDuration} days`
-                      : ""}
-                  </p>
+                  <div
+                    style={{
+                      padding: 15,
+                      borderRadius: 13,
+                      background: "var(--a-surface)",
+                      border: "1px solid var(--a-border)",
+                      marginBottom: 17,
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: 12,
+                        flexWrap: "wrap",
+                      }}
+                    >
+                      <div>
+                        <strong style={{ fontSize: 13 }}>
+                          Risk monitoring status
+                        </strong>
+
+                        <p style={{ ...muted, marginTop: 5 }}>
+                          {riskList.length} risk record(s) received
+                        </p>
+                      </div>
+
+                      <span
+                        style={{
+                          padding: "7px 12px",
+                          borderRadius: 20,
+                          fontSize: 11,
+                          fontWeight: 750,
+                          background:
+                            (riskSummary.high ?? 0) > 0
+                              ? "rgba(239,68,68,.15)"
+                              : "rgba(22,163,106,.15)",
+                          color:
+                            (riskSummary.high ?? 0) > 0
+                              ? colors.red
+                              : colors.green,
+                        }}
+                      >
+                        {(riskSummary.high ?? 0) > 0
+                          ? "Attention required"
+                          : "No high risks reported"}
+                      </span>
+                    </div>
+                  </div>
 
                   {riskList.length > 0 ? (
-                    <div style={{ display: "grid", gap: 10 }}>
+                    <div style={{ display: "grid", gap: 11 }}>
                       {riskList.map((risk, index) => {
                         const level = String(
-                          risk.riskLevel || "Unknown"
+                          risk.riskLevel || "unknown"
                         ).toLowerCase();
 
                         const color =
                           level === "high"
-                            ? "#dc2626"
+                            ? colors.red
                             : level === "medium"
-                            ? "#d97706"
+                            ? colors.orange
                             : level === "low"
-                            ? "#16a34a"
-                            : "#64748b";
+                            ? colors.green
+                            : colors.gray;
+
+                        const background =
+                          level === "high"
+                            ? "rgba(239,68,68,.12)"
+                            : level === "medium"
+                            ? "rgba(245,158,11,.12)"
+                            : "var(--a-surface)";
 
                         return (
                           <div
                             key={risk.taskId || risk.id || index}
                             style={{
-                              padding: 14,
-                              borderRadius: 11,
-                              background: "var(--surface, #f8fafc)",
+                              padding: 16,
+                              border: "1px solid var(--a-border)",
+                              borderRadius: 13,
                               display: "flex",
                               justifyContent: "space-between",
                               alignItems: "center",
-                              gap: 12,
                               flexWrap: "wrap",
+                              gap: 12,
+                              background: "var(--a-panel)",
                             }}
                           >
                             <div>
-                              <strong>
-                                {risk.title || risk.taskTitle || "Project task"}
+                              <strong
+                                style={{
+                                  fontSize: 13,
+                                  color: "var(--a-text)",
+                                }}
+                              >
+                                {risk.title ||
+                                  risk.taskTitle ||
+                                  "Project task"}
                               </strong>
 
-                              <p style={{ ...styles.muted, marginTop: 5 }}>
+                              <p style={{ ...muted, marginTop: 6 }}>
                                 Duration: {risk.duration ?? "—"} days
                                 {" · "}
                                 Slack: {risk.slack ?? "—"} days
@@ -788,12 +1431,13 @@ function Analytics() {
 
                             <span
                               style={{
+                                background,
                                 color,
-                                background: `${color}18`,
-                                padding: "6px 11px",
+                                padding: "7px 13px",
                                 borderRadius: 20,
-                                fontSize: 12,
-                                fontWeight: 700,
+                                fontSize: 11,
+                                fontWeight: 750,
+                                textTransform: "capitalize",
                               }}
                             >
                               {risk.riskLevel || "Unknown"}
@@ -803,218 +1447,157 @@ function Analytics() {
                       })}
                     </div>
                   ) : (
-                    <p style={styles.muted}>
-                      No individual risk records were returned by the risk engine.
-                    </p>
-                  )}
+                    <div
+                      className="analytics-surface"
+                      style={{
+                        padding: 25,
+                        textAlign: "center",
+                        borderRadius: 13,
+                        border: "1px dashed var(--a-border)",
+                      }}
+                    >
+                      <ShieldCheck
+                        size={30}
+                        color={colors.green}
+                        style={{ margin: "0 auto 10px" }}
+                      />
 
-                  {analytics.overdue.length > 0 && (
-                    <div style={{ marginTop: 18 }}>
-                      <strong>Overdue tasks</strong>
+                      <strong>No individual risk records</strong>
 
-                      {analytics.overdue.map((task) => (
-                        <p
-                          key={task.id}
-                          style={{ ...styles.muted, marginTop: 8 }}
-                        >
-                          • {task.title} — due{" "}
-                          {formatDate(task.deadline || task.dueDate)}
-                        </p>
-                      ))}
+                      <p style={{ ...muted, marginTop: 6 }}>
+                        No individual risk records were returned by the risk
+                        service.
+                      </p>
                     </div>
                   )}
                 </>
               )}
             </div>
 
-            {/* CPM */}
-            <div style={{ ...styles.panel, marginBottom: 22 }}>
-              <h3 style={styles.heading}>
-                <Target
-                  size={18}
-                  style={{ verticalAlign: "middle", marginRight: 8 }}
-                />
-                Schedule and critical path
-              </h3>
+            {/* SMART INSIGHTS */}
+            <div style={panel}>
+              <SectionTitle
+                icon={Zap}
+                title="Smart project insights"
+                subtitle="Recommendations based on available project analytics"
+              />
 
               {detailsLoading ? (
-                <p style={styles.muted}>
-                  Loading scheduling analysis...
-                </p>
-              ) : cpm ? (
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
-                    gap: 18,
-                  }}
-                >
-                  <div>
-                    <p style={styles.muted}>Project duration</p>
-                    <h2 style={{ fontSize: 24, marginTop: 6 }}>
-                      {cpm.projectDuration ??
-                        cpmSummary.projectDuration ??
-                        cpmSummary.totalDuration ??
-                        cpmSummary.duration ??
-                        "—"}
-                      {" days"}
-                    </h2>
-                  </div>
-
-                  <div>
-                    <p style={styles.muted}>Critical tasks</p>
-                    <h2 style={{ fontSize: 24, marginTop: 6 }}>
-                      {Array.isArray(cpm.criticalPath)
-                        ? cpm.criticalPath.length
-                        : analytics.criticalTasks.length}
-                    </h2>
-                  </div>
-
-                  <div>
-                    <p style={styles.muted}>Schedule analysis</p>
-                    <h2 style={{ fontSize: 17, marginTop: 9 }}>
-                      {cpm.criticalPath?.length ||
-                      analytics.criticalTasks.length
-                        ? "Available"
-                        : "Loaded"}
-                    </h2>
-                  </div>
-                </div>
+                <p style={muted}>Generating insights...</p>
               ) : (
-                <p style={styles.muted}>
-                  CPM analysis is not available right now.
-                </p>
-              )}
+                <div style={{ display: "grid", gap: 11 }}>
+                  {insightList.length > 0 ? (
+                    insightList.map((item, index) => (
+                      <div
+                        key={item.id || index}
+                        className="analytics-surface"
+                        style={{
+                          padding: 15,
+                          borderRadius: 12,
+                          border: "1px solid var(--a-border)",
+                          display: "flex",
+                          alignItems: "flex-start",
+                          gap: 12,
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: 34,
+                            height: 34,
+                            borderRadius: 10,
+                            display: "grid",
+                            placeItems: "center",
+                            color: colors.purple,
+                            background: `${colors.purple}20`,
+                            flexShrink: 0,
+                          }}
+                        >
+                          <TrendingUp size={17} />
+                        </div>
 
-              {analytics.criticalTasks.length > 0 && (
-                <div style={{ marginTop: 18 }}>
-                  <strong>Tasks with zero or negative slack</strong>
+                        <div>
+                          <strong style={{ fontSize: 13 }}>
+                            {typeof item === "string"
+                              ? `Insight ${index + 1}`
+                              : item.title ||
+                                item.heading ||
+                                item.type ||
+                                `Insight ${index + 1}`}
+                          </strong>
 
-                  {analytics.criticalTasks.map((task) => (
-                    <p
-                      key={task.taskId || task.id}
-                      style={{ ...styles.muted, marginTop: 8 }}
-                    >
-                      • {task.title} — slack: {task.slack}
+                          <p style={{ ...muted, marginTop: 6 }}>
+                            {typeof item === "string"
+                              ? item
+                              : item.message ||
+                                item.description ||
+                                item.recommendation ||
+                                "Review this project insight."}
+                          </p>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p style={muted}>
+                      No recommendations are currently available from the
+                      insights service.
                     </p>
-                  ))}
-                </div>
-              )}
-            </div>
+                  )}
 
-            {/* Team workload */}
-            <div style={{ ...styles.panel, marginBottom: 22 }}>
-              <h3 style={styles.heading}>
-                <Users
-                  size={18}
-                  style={{ verticalAlign: "middle", marginRight: 8 }}
-                />
-                Team workload
-              </h3>
-
-              {analytics.team.length === 0 ? (
-                <p style={styles.muted}>
-                  No assignees have been added to tasks yet.
-                </p>
-              ) : (
-                analytics.team.map(([name, count]) => (
-                  <ProgressBar
-                    key={name}
-                    label={name}
-                    value={Math.round(
-                      (count / analytics.total) * 100
-                    )}
-                    color="#6366f1"
-                  />
-                ))
-              )}
-            </div>
-
-            {/* Insights */}
-            <div style={styles.panel}>
-              <h3 style={styles.heading}>
-                <Zap
-                  size={18}
-                  style={{
-                    verticalAlign: "middle",
-                    marginRight: 8,
-                    color: "#d97706",
-                  }}
-                />
-                Project insights and recommendations
-              </h3>
-
-              {detailsLoading ? (
-                <p style={styles.muted}>
-                  Generating project insights...
-                </p>
-              ) : insightList.length > 0 ? (
-                <div style={{ display: "grid", gap: 12 }}>
-                  {insightList.map((item, index) => (
+                  {analytics.overdue.length > 0 && (
                     <div
-                      key={item.id || index}
+                      className="analytics-warning"
                       style={{
-                        padding: 14,
-                        borderRadius: 11,
-                        background: "var(--surface, #f8fafc)",
+                        padding: 15,
+                        borderRadius: 12,
+                        display: "flex",
+                        gap: 12,
+                        alignItems: "flex-start",
                       }}
                     >
-                      <strong>
-                        {typeof item === "string"
-                          ? `Insight ${index + 1}`
-                          : item.title ||
-                            item.heading ||
-                            item.type ||
-                            `Insight ${index + 1}`}
-                      </strong>
+                      <AlertCircle size={19} />
 
-                      <p style={{ ...styles.muted, marginTop: 6 }}>
-                        {typeof item === "string"
-                          ? item
-                          : item.message ||
-                            item.description ||
-                            item.recommendation ||
-                            "Review this project insight."}
-                      </p>
+                      <div>
+                        <strong style={{ fontSize: 13 }}>
+                          Attention required
+                        </strong>
+
+                        <p style={{ fontSize: 12, marginTop: 5 }}>
+                          {analytics.overdue.length} unfinished task(s) have
+                          passed their deadline. Review their status and
+                          delivery plan.
+                        </p>
+                      </div>
                     </div>
-                  ))}
+                  )}
+
+                  {analytics.progress < 100 && analytics.total > 0 && (
+                    <div
+                      className="analytics-surface"
+                      style={{
+                        padding: 15,
+                        borderRadius: 12,
+                        display: "flex",
+                        gap: 12,
+                        alignItems: "center",
+                        border: "1px solid var(--a-border)",
+                      }}
+                    >
+                      <ArrowUpRight color={colors.purple} size={20} />
+
+                      <div>
+                        <strong style={{ fontSize: 13 }}>
+                          Suggested next step
+                        </strong>
+
+                        <p style={{ ...muted, marginTop: 5 }}>
+                          Focus on in-progress and at-risk tasks to improve
+                          project delivery.
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              ) : insights ? (
-                <p style={styles.muted}>
-                  {insights.message ||
-                    insights.summary ||
-                    "The insights service returned data, but no recommendations were found."}
-                </p>
-              ) : (
-                <p style={styles.muted}>
-                  Insights are currently unavailable. Check that the backend insights endpoint is running.
-                </p>
               )}
-
-              {!detailsLoading &&
-                analytics.progress < 100 &&
-                analytics.total > 0 && (
-                  <div
-                    style={{
-                      marginTop: 16,
-                      padding: 14,
-                      borderRadius: 11,
-                      background: "var(--surface, #f8fafc)",
-                    }}
-                  >
-                    <TrendingUp
-                      size={18}
-                      style={{ verticalAlign: "middle", marginRight: 8 }}
-                    />
-
-                    <strong>Suggested next step</strong>
-
-                    <p style={{ ...styles.muted, marginTop: 6 }}>
-                      Focus on completing in-progress tasks and reviewing
-                      at-risk tasks to improve project delivery.
-                    </p>
-                  </div>
-                )}
             </div>
           </>
         )}

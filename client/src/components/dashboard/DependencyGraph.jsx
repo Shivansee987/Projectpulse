@@ -11,6 +11,17 @@ import ReactFlow, {
 
 import "reactflow/dist/style.css";
 import api from "../../services/api";
+import {
+  GitBranch,
+  Plus,
+  Trash2,
+  Clock3,
+  AlertTriangle,
+  CheckCircle2,
+  ShieldAlert,
+  ListTodo,
+  Activity,
+} from "lucide-react";
 
 const statusColors = {
   "In progress": "#3b82f6",
@@ -25,70 +36,42 @@ const statusColors = {
 
 function TaskNode({ data }) {
   const color = data.isCritical
-    ? "#dc2626"
+    ? "#ef4444"
     : statusColors[data.status] || "#64748b";
 
   return (
-    <div
-      style={{
-        width: 220,
-        padding: 14,
-        border: `3px solid ${color}`,
-        borderRadius: 10,
-        background: data.isCritical ? "#fff1f2" : "#ffffff",
-        color: "#1e293b",
-        boxShadow: data.isCritical
-          ? "0 0 12px rgba(220,38,38,0.18)"
-          : "0 3px 10px rgba(0,0,0,0.08)",
-      }}
-    >
+    <div className={`dependency-task-node ${data.isCritical ? "critical" : ""}`}>
       <Handle type="target" position={Position.Left} />
 
       {data.isCritical && (
-        <div
-          style={{
-            fontSize: 10,
-            fontWeight: 800,
-            color: "#dc2626",
-            marginBottom: 7,
-          }}
-        >
+        <div className="dependency-critical-label">
+          <AlertTriangle size={11} />
           CRITICAL TASK
         </div>
       )}
 
-      <div style={{ fontWeight: 700, marginBottom: 8 }}>
-        {data.title}
+      <div className="dependency-node-title">{data.title}</div>
+
+      <div className="dependency-node-status">
+        <span style={{ background: color }} />
+        {data.status || "Not Started"}
       </div>
 
-      <div style={{ fontSize: 12, color: "#64748b" }}>
-        Status: {data.status || "Not Started"}
+      <div className="dependency-node-meta">
+        <span>Assignee</span>
+        <strong>{data.assignee || "Unassigned"}</strong>
       </div>
 
-      <div style={{ fontSize: 12, color: "#64748b" }}>
-        Assignee: {data.assignee || "Unassigned"}
-      </div>
-
-      <div style={{ fontSize: 12, color: "#64748b" }}>
-        Duration: {data.duration} days
+      <div className="dependency-node-meta">
+        <span>Duration</span>
+        <strong>{data.duration ?? 0} days</strong>
       </div>
 
       {data.cpmAvailable && (
-        <>
-          <div style={{ fontSize: 12, marginTop: 5 }}>
-            ES: {data.ES} | EF: {data.EF}
-          </div>
-
-          <div
-            style={{
-              fontSize: 12,
-              fontWeight: 700,
-              color: data.isCritical ? "#dc2626" : "#64748b",
-            }}
-          >
-            Slack: {data.slack} days
-          </div>
-        </>
+        <div className="dependency-node-cpm">
+          <div>ES: {data.ES} · EF: {data.EF}</div>
+          <div>Slack: {data.slack} days</div>
+        </div>
       )}
 
       <Handle type="source" position={Position.Right} />
@@ -98,7 +81,6 @@ function TaskNode({ data }) {
 
 const nodeTypes = { task: TaskNode };
 
-// Critical Path Method calculation
 function calculateCPM(tasks, dependencies) {
   const taskMap = new Map(tasks.map((task) => [task.id, task]));
   const successors = new Map();
@@ -110,10 +92,7 @@ function calculateCPM(tasks, dependencies) {
     successors.set(task.id, []);
     predecessors.set(task.id, []);
     indegree.set(task.id, 0);
-    duration.set(
-      task.id,
-      Math.max(0, Number(task.duration) || 0)
-    );
+    duration.set(task.id, Math.max(0, Number(task.duration) || 0));
   });
 
   dependencies.forEach((dependency) => {
@@ -127,27 +106,23 @@ function calculateCPM(tasks, dependencies) {
     indegree.set(to, indegree.get(to) + 1);
   });
 
-  // Topological sorting
   const queue = tasks
     .filter((task) => indegree.get(task.id) === 0)
     .map((task) => task.id);
 
   const order = [];
 
-  while (queue.length > 0) {
+  while (queue.length) {
     const current = queue.shift();
     order.push(current);
 
     successors.get(current).forEach((next) => {
       indegree.set(next, indegree.get(next) - 1);
 
-      if (indegree.get(next) === 0) {
-        queue.push(next);
-      }
+      if (indegree.get(next) === 0) queue.push(next);
     });
   }
 
-  // Detect circular dependencies
   if (order.length !== tasks.length) {
     return { hasCycle: true };
   }
@@ -158,39 +133,34 @@ function calculateCPM(tasks, dependencies) {
   const LF = new Map();
   const levels = new Map();
 
-  // Forward pass
   order.forEach((id) => {
-    const previousTasks = predecessors.get(id);
+    const previous = predecessors.get(id);
 
-    const earliestStart = previousTasks.length
-      ? Math.max(...previousTasks.map((prev) => EF.get(prev)))
+    const start = previous.length
+      ? Math.max(...previous.map((prev) => EF.get(prev)))
       : 0;
 
-    ES.set(id, earliestStart);
-    EF.set(id, earliestStart + duration.get(id));
+    ES.set(id, start);
+    EF.set(id, start + duration.get(id));
 
-    const level = previousTasks.length
-      ? Math.max(...previousTasks.map((prev) => levels.get(prev))) + 1
+    const level = previous.length
+      ? Math.max(...previous.map((prev) => levels.get(prev))) + 1
       : 0;
 
     levels.set(id, level);
   });
 
-  const projectDuration = Math.max(
-    0,
-    ...Array.from(EF.values())
-  );
+  const projectDuration = Math.max(0, ...EF.values());
 
-  // Backward pass
   [...order].reverse().forEach((id) => {
-    const nextTasks = successors.get(id);
+    const next = successors.get(id);
 
-    const latestFinish = nextTasks.length
-      ? Math.min(...nextTasks.map((next) => LS.get(next)))
+    const finish = next.length
+      ? Math.min(...next.map((item) => LS.get(item)))
       : projectDuration;
 
-    LF.set(id, latestFinish);
-    LS.set(id, latestFinish - duration.get(id));
+    LF.set(id, finish);
+    LS.set(id, finish - duration.get(id));
   });
 
   const slack = new Map();
@@ -198,7 +168,6 @@ function calculateCPM(tasks, dependencies) {
 
   tasks.forEach((task) => {
     const value = LS.get(task.id) - ES.get(task.id);
-
     slack.set(task.id, value);
 
     if (Math.abs(value) < 0.000001) {
@@ -252,9 +221,7 @@ function DependencyGraph({ tasks = [] }) {
 
         if (!cancelled) {
           const unique = Array.from(
-            new Map(
-              allDependencies.map((item) => [item.id, item])
-            ).values()
+            new Map(allDependencies.map((item) => [item.id, item])).values()
           );
 
           setDependencies(unique);
@@ -262,8 +229,7 @@ function DependencyGraph({ tasks = [] }) {
       } catch (err) {
         if (!cancelled) {
           setError(
-            err.response?.data?.message ||
-              "Could not load dependencies."
+            err.response?.data?.message || "Could not load dependencies."
           );
         }
       } finally {
@@ -307,8 +273,7 @@ function DependencyGraph({ tasks = [] }) {
       setRefreshKey((current) => current + 1);
     } catch (err) {
       setError(
-        err.response?.data?.message ||
-          "Could not create dependency."
+        err.response?.data?.message || "Could not create dependency."
       );
     } finally {
       setSaving(false);
@@ -316,11 +281,7 @@ function DependencyGraph({ tasks = [] }) {
   };
 
   const handleDeleteDependency = async (dependencyId) => {
-    if (
-      !window.confirm(
-        "Are you sure you want to delete this dependency?"
-      )
-    ) {
+    if (!window.confirm("Are you sure you want to delete this dependency?")) {
       return;
     }
 
@@ -334,8 +295,7 @@ function DependencyGraph({ tasks = [] }) {
       setRefreshKey((current) => current + 1);
     } catch (err) {
       setError(
-        err.response?.data?.message ||
-          "Could not delete dependency."
+        err.response?.data?.message || "Could not delete dependency."
       );
     }
   };
@@ -345,7 +305,6 @@ function DependencyGraph({ tasks = [] }) {
     [tasks, dependencies]
   );
 
-  // Arrange nodes according to dependency levels
   const nodes = useMemo(() => {
     const rows = new Map();
 
@@ -357,10 +316,6 @@ function DependencyGraph({ tasks = [] }) {
 
       const row = rows.get(level) || 0;
       rows.set(level, row + 1);
-
-      const isCritical =
-        !cpm.hasCycle &&
-        cpm.criticalTasks?.has(task.id);
 
       return {
         id: task.id,
@@ -374,7 +329,8 @@ function DependencyGraph({ tasks = [] }) {
           status: task.status,
           assignee: task.assignee,
           duration: task.duration,
-          isCritical,
+          isCritical:
+            !cpm.hasCycle && cpm.criticalTasks?.has(task.id),
           cpmAvailable: !cpm.hasCycle,
           ES: cpm.ES?.get(task.id),
           EF: cpm.EF?.get(task.id),
@@ -400,8 +356,7 @@ function DependencyGraph({ tasks = [] }) {
             !cpm.hasCycle &&
             cpm.criticalTasks?.has(from) &&
             cpm.criticalTasks?.has(to) &&
-            Math.abs(cpm.EF.get(from) - cpm.ES.get(to)) <
-              0.000001;
+            Math.abs(cpm.EF.get(from) - cpm.ES.get(to)) < 0.000001;
 
           return {
             id: dependency.id,
@@ -411,11 +366,11 @@ function DependencyGraph({ tasks = [] }) {
             animated: true,
             markerEnd: {
               type: MarkerType.ArrowClosed,
-              color: isCritical ? "#dc2626" : "#16a34a",
+              color: isCritical ? "#ef4444" : "#22c55e",
             },
             style: {
-              stroke: isCritical ? "#dc2626" : "#16a34a",
-              strokeWidth: isCritical ? 4 : 2,
+              stroke: isCritical ? "#ef4444" : "#22c55e",
+              strokeWidth: isCritical ? 3.5 : 2.5,
             },
           };
         }),
@@ -423,46 +378,410 @@ function DependencyGraph({ tasks = [] }) {
   );
 
   return (
-    <div
-      style={{
-        background: "#ffffff",
-        borderRadius: 12,
-        padding: 20,
-        marginTop: 24,
-        border: "1px solid #e2e8f0",
-      }}
-    >
-      <h2 style={{ fontSize: 20, fontWeight: 700 }}>
-        Task Dependency Graph
-      </h2>
+    <section className="dependency-workspace">
+      <style>{`
+        .dependency-workspace {
+          --dep-panel: #ffffff;
+          --dep-surface: #f7f9fd;
+          --dep-border: #e4e9f2;
+          --dep-text: #182238;
+          --dep-muted: #718096;
+          margin-top: 24px;
+          padding: 25px;
+          border-radius: 22px;
+          border: 1px solid var(--dep-border);
+          background: var(--dep-panel);
+          color: var(--dep-text);
+          box-shadow: 0 10px 30px rgba(15,23,42,.06);
+        }
 
-      <p style={{ color: "#64748b", fontSize: 13, marginTop: 6 }}>
-        Connect tasks and visualize the critical path.
-      </p>
+        :root[data-theme="dark"] .dependency-workspace {
+          --dep-panel: #151d30;
+          --dep-surface: #101827;
+          --dep-border: #2a3851;
+          --dep-text: #edf2ff;
+          --dep-muted: #9aa9c0;
+        }
 
-      <form
-        onSubmit={handleAddDependency}
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-          gap: 12,
-          marginTop: 20,
-          alignItems: "end",
-        }}
-      >
+        .dependency-heading {
+          display: flex;
+          align-items: center;
+          gap: 14px;
+          margin-bottom: 22px;
+        }
+
+        .dependency-heading-icon {
+          display: grid;
+          place-items: center;
+          width: 48px;
+          height: 48px;
+          border-radius: 15px;
+          background: rgba(99,102,241,.14);
+          color: #818cf8;
+        }
+
+        .dependency-heading h2 {
+          font-size: 21px;
+          font-weight: 800;
+          margin: 0;
+          color: var(--dep-text);
+        }
+
+        .dependency-heading p {
+          font-size: 13px;
+          color: var(--dep-muted);
+          margin: 5px 0 0;
+        }
+
+        .dependency-form {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
+          align-items: end;
+          gap: 14px;
+          padding: 19px;
+          border: 1px solid var(--dep-border);
+          border-radius: 16px;
+          background: var(--dep-surface);
+        }
+
+        .dependency-form label {
+          display: block;
+          margin-bottom: 8px;
+          font-size: 12px;
+          font-weight: 700;
+          color: var(--dep-text);
+        }
+
+        .dependency-form select {
+          width: 100%;
+          min-width: 0;
+          padding: 12px;
+          border: 1px solid var(--dep-border);
+          border-radius: 10px;
+          outline: none;
+          background: var(--dep-panel);
+          color: var(--dep-text);
+        }
+
+        .dependency-form select:focus {
+          border-color: #818cf8;
+          box-shadow: 0 0 0 3px rgba(99,102,241,.12);
+        }
+
+        .dependency-add-button {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          padding: 12px 17px;
+          border: 0;
+          border-radius: 10px;
+          background: linear-gradient(135deg,#6366f1,#4f46e5);
+          color: white;
+          font-weight: 700;
+          cursor: pointer;
+          white-space: nowrap;
+        }
+
+        .dependency-add-button:disabled {
+          opacity: .5;
+          cursor: not-allowed;
+        }
+
+        .dependency-message {
+          margin-top: 14px;
+          padding: 11px 14px;
+          border-radius: 10px;
+          font-size: 13px;
+        }
+
+        .dependency-message.error {
+          background: rgba(239,68,68,.10);
+          color: #ef7777;
+          border: 1px solid rgba(239,68,68,.22);
+        }
+
+        .dependency-message.success {
+          background: rgba(34,197,94,.10);
+          color: #22a06b;
+          border: 1px solid rgba(34,197,94,.22);
+        }
+
+        .dependency-section {
+          margin-top: 25px;
+        }
+
+        .dependency-section-title {
+          display: flex;
+          align-items: center;
+          gap: 9px;
+          margin-bottom: 13px;
+          font-size: 15px;
+          font-weight: 800;
+          color: var(--dep-text);
+        }
+
+        .dependency-legend {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 17px;
+          padding: 14px 16px;
+          border-radius: 12px;
+          background: var(--dep-surface);
+          border: 1px solid var(--dep-border);
+          font-size: 12px;
+          color: var(--dep-muted);
+        }
+
+        .dependency-legend span {
+          display: flex;
+          align-items: center;
+          gap: 7px;
+        }
+
+        .dependency-legend i {
+          width: 9px;
+          height: 9px;
+          border-radius: 50%;
+        }
+
+        .dependency-connection {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          flex-wrap: wrap;
+          gap: 12px;
+          padding: 14px 16px;
+          margin-bottom: 9px;
+          border-radius: 13px;
+          background: var(--dep-surface);
+          border: 1px solid var(--dep-border);
+        }
+
+        .dependency-connection-path {
+          display: flex;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 10px;
+          font-size: 13px;
+          color: var(--dep-text);
+        }
+
+        .dependency-task-chip {
+          padding: 7px 11px;
+          border: 1px solid var(--dep-border);
+          border-radius: 8px;
+          background: var(--dep-panel);
+          font-weight: 650;
+        }
+
+        .dependency-delete {
+          display: inline-flex;
+          align-items: center;
+          gap: 7px;
+          padding: 8px 11px;
+          border: 1px solid rgba(239,68,68,.22);
+          border-radius: 9px;
+          background: rgba(239,68,68,.10);
+          color: #ef7777;
+          font-weight: 700;
+          cursor: pointer;
+        }
+
+        .dependency-analysis {
+          margin-top: 24px;
+          padding: 19px;
+          border-radius: 16px;
+          border: 1px solid var(--dep-border);
+          background: var(--dep-surface);
+        }
+
+        .dependency-analysis h3 {
+          margin: 0 0 12px;
+          color: var(--dep-text);
+          font-size: 15px;
+          font-weight: 800;
+        }
+
+        .dependency-analysis p {
+          margin: 5px 0;
+          color: var(--dep-muted);
+          font-size: 13px;
+        }
+
+        .dependency-analysis strong {
+          color: var(--dep-text);
+        }
+
+        .dependency-analysis .cycle-warning {
+          display: flex;
+          align-items: flex-start;
+          gap: 10px;
+          color: #ef7777;
+          font-weight: 650;
+        }
+
+        .dependency-graph {
+          height: 520px;
+          margin-top: 18px;
+          overflow: hidden;
+          border: 1px solid var(--dep-border);
+          border-radius: 16px;
+          background-color: var(--dep-surface);
+        }
+
+        .dependency-graph .react-flow__background {
+          background: var(--dep-surface);
+        }
+
+        .dependency-graph .react-flow__controls {
+          overflow: hidden;
+          border: 1px solid var(--dep-border);
+          border-radius: 10px;
+          box-shadow: none;
+        }
+
+        .dependency-graph .react-flow__controls-button {
+          background: var(--dep-panel);
+          color: var(--dep-text);
+          border-bottom: 1px solid var(--dep-border);
+          fill: var(--dep-text);
+        }
+
+        .dependency-graph .react-flow__minimap {
+          background: var(--dep-panel);
+          border: 1px solid var(--dep-border);
+          border-radius: 10px;
+        }
+
+        .dependency-task-node {
+          width: 220px;
+          padding: 14px;
+          border: 2px solid #64748b;
+          border-radius: 13px;
+          background: #ffffff;
+          color: #182238;
+          box-shadow: 0 8px 22px rgba(15,23,42,.10);
+        }
+
+        :root[data-theme="dark"] .dependency-task-node {
+          background: #1b2940;
+          color: #edf2ff;
+          border-color: #52627e;
+          box-shadow: 0 8px 22px rgba(0,0,0,.24);
+        }
+
+        .dependency-task-node.critical {
+          background: #fff1f2;
+          border-color: #ef4444;
+        }
+
+        :root[data-theme="dark"] .dependency-task-node.critical {
+          background: #39212d;
+          color: #ffe4e6;
+          border-color: #ef4444;
+        }
+
+        .dependency-critical-label {
+          display: flex;
+          align-items: center;
+          gap: 5px;
+          margin-bottom: 7px;
+          color: #ef4444;
+          font-size: 10px;
+          font-weight: 850;
+          letter-spacing: .7px;
+        }
+
+        .dependency-node-title {
+          margin-bottom: 10px;
+          font-size: 14px;
+          font-weight: 800;
+          overflow-wrap: anywhere;
+        }
+
+        .dependency-node-status {
+          display: flex;
+          align-items: center;
+          gap: 7px;
+          margin-bottom: 9px;
+          font-size: 11px;
+          color: #64748b;
+        }
+
+        :root[data-theme="dark"] .dependency-node-status {
+          color: #b8c5d9;
+        }
+
+        .dependency-node-status span {
+          width: 7px;
+          height: 7px;
+          border-radius: 50%;
+        }
+
+        .dependency-node-meta {
+          display: flex;
+          justify-content: space-between;
+          gap: 8px;
+          margin-top: 5px;
+          font-size: 11px;
+        }
+
+        .dependency-node-meta span {
+          color: #64748b;
+        }
+
+        :root[data-theme="dark"] .dependency-node-meta span {
+          color: #a7b5ca;
+        }
+
+        .dependency-node-cpm {
+          margin-top: 9px;
+          padding-top: 8px;
+          border-top: 1px solid rgba(128,128,128,.3);
+          font-size: 11px;
+          font-weight: 700;
+          line-height: 1.7;
+        }
+
+        @media (max-width: 760px) {
+          .dependency-workspace {
+            padding: 16px;
+          }
+
+          .dependency-form {
+            grid-template-columns: 1fr;
+          }
+
+          .dependency-add-button {
+            width: 100%;
+          }
+
+          .dependency-graph {
+            height: 450px;
+          }
+        }
+      `}</style>
+
+      <div className="dependency-heading">
+        <div className="dependency-heading-icon">
+          <GitBranch size={23} />
+        </div>
         <div>
-          <label style={{ display: "block", marginBottom: 6 }}>
-            Task that depends
-          </label>
+          <h2>Task Dependency Graph</h2>
+          <p>Connect tasks, manage prerequisites and visualize delivery flow.</p>
+        </div>
+      </div>
 
+      <form className="dependency-form" onSubmit={handleAddDependency}>
+        <div>
+          <label>Task that depends</label>
           <select
             value={selectedTask}
             onChange={(event) => setSelectedTask(event.target.value)}
             required
-            style={{ width: "100%", padding: 10, borderRadius: 8 }}
           >
             <option value="">Select task</option>
-
             {tasks.map((task) => (
               <option key={task.id} value={task.id}>
                 {task.title}
@@ -472,20 +791,13 @@ function DependencyGraph({ tasks = [] }) {
         </div>
 
         <div>
-          <label style={{ display: "block", marginBottom: 6 }}>
-            Must be completed first
-          </label>
-
+          <label>Must be completed first</label>
           <select
             value={selectedPrerequisite}
-            onChange={(event) =>
-              setSelectedPrerequisite(event.target.value)
-            }
+            onChange={(event) => setSelectedPrerequisite(event.target.value)}
             required
-            style={{ width: "100%", padding: 10, borderRadius: 8 }}
           >
             <option value="">Select prerequisite</option>
-
             {tasks.map((task) => (
               <option key={task.id} value={task.id}>
                 {task.title}
@@ -496,59 +808,52 @@ function DependencyGraph({ tasks = [] }) {
 
         <button
           type="submit"
+          className="dependency-add-button"
           disabled={saving || loading || tasks.length < 2}
-          style={{
-            padding: 11,
-            border: "none",
-            borderRadius: 8,
-            background: "#2563eb",
-            color: "#ffffff",
-            cursor: "pointer",
-            fontWeight: 600,
-          }}
         >
+          <Plus size={17} />
           {saving ? "Adding..." : "Add Dependency"}
         </button>
       </form>
 
       {error && (
-        <p style={{ color: "#dc2626", marginTop: 12 }}>{error}</p>
-      )}
-
-      {success && (
-        <p style={{ color: "#16a34a", marginTop: 12 }}>{success}</p>
-      )}
-
-      {!loading && tasks.length > 0 && (
-        <div
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            gap: 18,
-            marginTop: 22,
-            fontSize: 13,
-          }}
-        >
-          <span style={{ color: "#dc2626", fontWeight: 700 }}>
-            ● Critical Task / Path
-          </span>
-
-          <span style={{ color: "#16a34a", fontWeight: 700 }}>
-            ● Normal Dependency
-          </span>
+        <div className="dependency-message error">
+          <AlertTriangle size={15} style={{ verticalAlign: "middle" }} />{" "}
+          {error}
         </div>
       )}
 
-      <div style={{ marginTop: 24 }}>
-        <h3 style={{ fontWeight: 700, marginBottom: 12 }}>
-          Existing Connections
-        </h3>
+      {success && (
+        <div className="dependency-message success">
+          <CheckCircle2 size={15} style={{ verticalAlign: "middle" }} />{" "}
+          {success}
+        </div>
+      )}
+
+      <div className="dependency-section">
+        <div className="dependency-section-title">
+          <Activity size={17} />
+          Graph Legend
+        </div>
+
+        <div className="dependency-legend">
+          <span><i style={{ background: "#ef4444" }} /> Critical Task / Path</span>
+          <span><i style={{ background: "#22c55e" }} /> Normal Dependency</span>
+          <span><i style={{ background: "#3b82f6" }} /> In Progress</span>
+        </div>
+      </div>
+
+      <div className="dependency-section">
+        <div className="dependency-section-title">
+          <GitBranch size={17} />
+          Existing Connections ({dependencies.length})
+        </div>
 
         {loading ? (
-          <p>Loading dependencies...</p>
+          <p style={{ color: "var(--dep-muted)" }}>Loading dependencies...</p>
         ) : dependencies.length === 0 ? (
-          <p style={{ color: "#64748b" }}>
-            No dependencies created yet.
+          <p style={{ color: "var(--dep-muted)", fontSize: 13 }}>
+            No dependencies created yet. Add your first connection above.
           </p>
         ) : (
           dependencies.map((dependency) => {
@@ -561,44 +866,23 @@ function DependencyGraph({ tasks = [] }) {
             );
 
             return (
-              <div
-                key={dependency.id}
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  gap: 12,
-                  padding: 12,
-                  marginBottom: 8,
-                  border: "1px solid #e2e8f0",
-                  borderRadius: 8,
-                  flexWrap: "wrap",
-                }}
-              >
-                <span>
-                  <strong>
+              <div className="dependency-connection" key={dependency.id}>
+                <div className="dependency-connection-path">
+                  <span className="dependency-task-chip">
                     {prerequisiteTask?.title || "Task"}
-                  </strong>
-                  {" → "}
-                  <strong>
+                  </span>
+                  <GitBranch size={15} color="#22c55e" />
+                  <span className="dependency-task-chip">
                     {dependentTask?.title || "Task"}
-                  </strong>
-                </span>
+                  </span>
+                </div>
 
                 <button
                   type="button"
-                  onClick={() =>
-                    handleDeleteDependency(dependency.id)
-                  }
-                  style={{
-                    padding: "7px 12px",
-                    border: "none",
-                    borderRadius: 6,
-                    background: "#fee2e2",
-                    color: "#b91c1c",
-                    cursor: "pointer",
-                  }}
+                  className="dependency-delete"
+                  onClick={() => handleDeleteDependency(dependency.id)}
                 >
+                  <Trash2 size={14} />
                   Delete
                 </button>
               </div>
@@ -609,69 +893,61 @@ function DependencyGraph({ tasks = [] }) {
 
       {!loading && tasks.length > 0 && (
         <>
-          <div
-            style={{
-              marginTop: 24,
-              padding: 16,
-              background: "#f8fafc",
-              borderRadius: 10,
-              border: "1px solid #e2e8f0",
-            }}
-          >
-            <h3 style={{ fontWeight: 700, marginBottom: 8 }}>
+          <div className="dependency-analysis">
+            <h3>
+              <Activity size={17} style={{ verticalAlign: "middle" }} />{" "}
               Critical Path Analysis
             </h3>
 
             {cpm.hasCycle ? (
-              <p style={{ color: "#dc2626", fontWeight: 600 }}>
-                Circular dependency detected. Please fix the task
-                connections to calculate the critical path.
+              <p className="cycle-warning">
+                <AlertTriangle size={17} />
+                Circular dependency detected. Please fix the task connections
+                to calculate the critical path.
               </p>
             ) : (
               <>
-                <p style={{ color: "#334155", fontSize: 14 }}>
+                <p>
                   Estimated project duration:{" "}
                   <strong>{cpm.projectDuration} days</strong>
                 </p>
-
-                <p style={{ color: "#64748b", fontSize: 13, marginTop: 6 }}>
-                  Critical tasks: {cpm.criticalTasks.size} / {tasks.length}
+                <p>
+                  Critical tasks:{" "}
+                  <strong>{cpm.criticalTasks.size} / {tasks.length}</strong>
                 </p>
               </>
             )}
           </div>
 
-          <div
-            style={{
-              width: "100%",
-              height: 520,
-              marginTop: 20,
-              border: "1px solid #e2e8f0",
-              borderRadius: 10,
-              overflow: "hidden",
-            }}
-          >
-            <ReactFlow
-              nodes={nodes}
-              edges={edges}
-              nodeTypes={nodeTypes}
-              fitView
-              fitViewOptions={{ padding: 0.2 }}
-              nodesDraggable
-              nodesConnectable={false}
-            >
-              <Background />
-              <Controls />
-              <MiniMap
-                nodeColor={(node) =>
-                  node.data?.isCritical ? "#dc2626" : "#64748b"
-                }
-              />
-            </ReactFlow>
+          <div className="dependency-section">
+            <div className="dependency-section-title">
+              <GitBranch size={17} />
+              Visual Dependency Map
+            </div>
+
+            <div className="dependency-graph">
+              <ReactFlow
+                nodes={nodes}
+                edges={edges}
+                nodeTypes={nodeTypes}
+                fitView
+                fitViewOptions={{ padding: 0.2 }}
+                nodesDraggable
+                nodesConnectable={false}
+              >
+                <Background color="#64748b" gap={22} size={1} />
+                <Controls />
+                <MiniMap
+                  nodeColor={(node) =>
+                    node.data?.isCritical ? "#ef4444" : "#64748b"
+                  }
+                />
+              </ReactFlow>
+            </div>
           </div>
         </>
       )}
-    </div>
+    </section>
   );
 }
 

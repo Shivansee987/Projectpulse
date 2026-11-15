@@ -6,7 +6,9 @@ import {
   GitBranch,
   LayoutGrid,
   ListTodo,
+  Moon,
   Sparkles,
+  Sun,
 } from "lucide-react";
 
 import { navItems } from "../../data/projectData";
@@ -28,7 +30,12 @@ const routeMap = {
   insights: "/analytics",
 };
 
-function Sidebar({ activeTab, setActiveTab }) {
+function Sidebar({
+  activeTab,
+  setActiveTab,
+  theme,
+  onToggleTheme,
+}) {
   const navigate = useNavigate();
 
   function handleNavigation(key) {
@@ -42,7 +49,6 @@ function Sidebar({ activeTab, setActiveTab }) {
 
   const sidebarItems = [...navItems];
 
-  // Ensure Analytics is visible in the sidebar
   if (!sidebarItems.some((item) => item.key === "insights")) {
     sidebarItems.push({
       key: "insights",
@@ -50,9 +56,10 @@ function Sidebar({ activeTab, setActiveTab }) {
     });
   }
 
+  const ThemeIcon = theme === "dark" ? Sun : Moon;
+
   return (
     <aside className="sidebar-panel">
-      {/* Brand */}
       <div className="brand-row">
         <div className="brand-mark">P</div>
 
@@ -62,7 +69,6 @@ function Sidebar({ activeTab, setActiveTab }) {
         </div>
       </div>
 
-      {/* Project selector label */}
       <div className="project-switcher">
         <div className="project-switcher-label">
           Active Project
@@ -73,7 +79,6 @@ function Sidebar({ activeTab, setActiveTab }) {
         </div>
       </div>
 
-      {/* Navigation */}
       <nav className="sidebar-nav">
         {sidebarItems.map((item) => {
           const Icon = iconMap[item.key];
@@ -101,7 +106,6 @@ function Sidebar({ activeTab, setActiveTab }) {
         })}
       </nav>
 
-      {/* Footer */}
       <div className="sidebar-footer">
         <div className="mini-card">
           <div className="mini-card-label">
@@ -112,6 +116,16 @@ function Sidebar({ activeTab, setActiveTab }) {
             Watchlist
           </div>
         </div>
+
+        <button
+          type="button"
+          className="theme-toggle"
+          onClick={onToggleTheme}
+          aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+          title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+        >
+          <ThemeIcon size={17} />
+        </button>
 
         <button
           type="button"

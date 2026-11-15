@@ -1,7 +1,8 @@
+
 @import "tailwindcss";
 
 /* =========================================
-   1. GLOBAL THEME
+   1. GLOBAL THEME VARIABLES
 ========================================= */
 
 :root {
@@ -9,6 +10,7 @@
 
   --bg-1: #f4f7ff;
   --bg-2: #eef2ff;
+
   --panel: rgba(255, 255, 255, 0.74);
   --panel-strong: rgba(255, 255, 255, 0.9);
   --panel-deep: rgba(15, 23, 42, 0.86);
@@ -24,7 +26,48 @@
   --coral: #ef4444;
 
   --shadow: 0 20px 50px rgba(15, 23, 42, 0.12);
+  --card-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+
+  --input-bg: #ffffff;
+  --input-border: #d1d5db;
+  --surface-hover: rgba(99, 102, 241, 0.05);
 }
+
+/* =========================================
+   2. DARK THEME VARIABLES
+========================================= */
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg-1: #0b1120;
+  --bg-2: #111a2e;
+
+  --panel: rgba(23, 33, 54, 0.88);
+  --panel-strong: #1a2740;
+  --panel-deep: #080f1e;
+
+  --text: #e5edff;
+  --text-soft: #a3b2cc;
+  --line: rgba(148, 163, 184, 0.18);
+
+  --indigo: #9295ff;
+  --cyan: #42d7ef;
+  --emerald: #34d399;
+  --amber: #fbbf24;
+  --coral: #fb7185;
+
+  --shadow: 0 20px 50px rgba(0, 0, 0, 0.28);
+  --card-shadow: 0 12px 35px rgba(0, 0, 0, 0.2);
+
+  --input-bg: #111c31;
+  --input-border: rgba(148, 163, 184, 0.22);
+  --surface-hover: rgba(99, 102, 241, 0.1);
+}
+
+/* =========================================
+   3. GLOBAL RESET
+========================================= */
 
 * {
   margin: 0;
@@ -37,6 +80,10 @@ body,
 #root {
   min-height: 100%;
   min-height: 100vh;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
@@ -56,6 +103,10 @@ body {
     linear-gradient(180deg, var(--bg-2), var(--bg-1));
 
   color: var(--text);
+
+  transition:
+    background 0.25s ease,
+    color 0.25s ease;
 }
 
 button,
@@ -74,8 +125,17 @@ button:disabled {
   opacity: 0.6;
 }
 
+a {
+  color: inherit;
+}
+
+::selection {
+  background: rgba(99, 102, 241, 0.25);
+  color: var(--text);
+}
+
 /* =========================================
-   2. MAIN LAYOUT
+   4. MAIN LAYOUT
 ========================================= */
 
 .project-shell {
@@ -107,7 +167,6 @@ button:disabled {
   box-shadow: var(--shadow);
   color: white;
 
-  /* SIDEBAR CLICK FIX */
   position: relative;
   z-index: 10;
   pointer-events: auto;
@@ -130,7 +189,7 @@ button:disabled {
 }
 
 /* =========================================
-   3. SIDEBAR
+   5. SIDEBAR
 ========================================= */
 
 .brand-row {
@@ -285,13 +344,15 @@ button:disabled {
   font-weight: 700;
 }
 
-.collapse-toggle {
+.collapse-toggle,
+.theme-toggle {
   display: flex;
   align-items: center;
   justify-content: center;
 
   width: 38px;
   height: 38px;
+  flex-shrink: 0;
 
   border-radius: 12px;
 
@@ -299,6 +360,14 @@ button:disabled {
   border: 1px solid rgba(148, 163, 184, 0.18);
 
   color: white;
+
+  transition: all 0.2s ease;
+}
+
+.collapse-toggle:hover,
+.theme-toggle:hover {
+  transform: translateY(-2px);
+  background: rgba(99, 102, 241, 0.2);
 }
 
 .secondary-icon {
@@ -307,7 +376,7 @@ button:disabled {
 }
 
 /* =========================================
-   4. NAVBAR
+   6. NAVBAR
 ========================================= */
 
 .topbar {
@@ -318,13 +387,13 @@ button:disabled {
 
   padding: 16px 22px;
 
-  border: 1px solid rgba(148, 163, 184, 0.18);
+  border: 1px solid var(--line);
   border-radius: 26px;
 
-  background: rgba(255, 255, 255, 0.88);
+  background: var(--panel-strong);
   backdrop-filter: blur(12px);
 
-  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+  box-shadow: var(--card-shadow);
 
   position: relative;
   z-index: 1000;
@@ -344,8 +413,8 @@ button:disabled {
 
   border-radius: 14px;
 
-  background: rgba(255, 255, 255, 0.7);
-  border: 1px solid rgba(148, 163, 184, 0.15);
+  background: var(--surface-hover);
+  border: 1px solid var(--line);
 
   color: var(--text-soft);
 }
@@ -371,8 +440,8 @@ button:disabled {
 
   border-radius: 8px;
 
-  background: rgba(15, 23, 42, 0.04);
-  border: 1px solid rgba(148, 163, 184, 0.2);
+  background: var(--surface-hover);
+  border: 1px solid var(--line);
 
   font-size: 0.72rem;
   color: var(--text-soft);
@@ -399,7 +468,7 @@ button:disabled {
   font-size: 0.78rem;
   font-weight: 700;
 
-  color: var(--text-soft);
+  color: var(--emerald);
 
   background: rgba(16, 185, 129, 0.09);
   border: 1px solid rgba(16, 185, 129, 0.18);
@@ -431,7 +500,7 @@ button:disabled {
   margin-left: -8px;
 
   border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.9);
+  border: 2px solid var(--panel-strong);
 
   background: linear-gradient(
     135deg,
@@ -448,7 +517,7 @@ button:disabled {
 }
 
 /* =========================================
-   5. NOTIFICATION DROPDOWN
+   7. NOTIFICATIONS
 ========================================= */
 
 .notification-dropdown {
@@ -465,12 +534,12 @@ button:disabled {
 
   border-radius: 16px;
 
-  background: #ffffff;
+  background: var(--panel-strong);
   color: var(--text);
 
-  border: 1px solid rgba(148, 163, 184, 0.2);
+  border: 1px solid var(--line);
 
-  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.2);
+  box-shadow: var(--shadow);
 }
 
 .notification-dropdown h3 {
@@ -485,7 +554,7 @@ button:disabled {
 }
 
 /* =========================================
-   6. BUTTONS
+   8. BUTTONS
 ========================================= */
 
 .primary-button,
@@ -503,7 +572,8 @@ button:disabled {
 
   transition:
     transform 0.2s ease,
-    box-shadow 0.2s ease;
+    box-shadow 0.2s ease,
+    background 0.2s ease;
 }
 
 .primary-button:hover,
@@ -524,20 +594,24 @@ button:disabled {
   box-shadow: 0 12px 24px rgba(99, 102, 241, 0.28);
 }
 
+.primary-button:hover {
+  box-shadow: 0 15px 28px rgba(99, 102, 241, 0.35);
+}
+
 .secondary-button {
-  background: rgba(15, 23, 42, 0.04);
-  border-color: rgba(148, 163, 184, 0.2);
+  background: var(--surface-hover);
+  border-color: var(--line);
   color: var(--text);
 }
 
 .ghost-button {
-  background: rgba(255, 255, 255, 0.7);
-  border-color: rgba(148, 163, 184, 0.2);
+  background: var(--panel);
+  border-color: var(--line);
   color: var(--text-soft);
 }
 
 /* =========================================
-   7. PAGE CONTENT
+   9. PAGE CONTENT
 ========================================= */
 
 .page-content {
@@ -563,12 +637,12 @@ button:disabled {
 }
 
 .glass-panel {
-  background: rgba(255, 255, 255, 0.72);
+  background: var(--panel);
 
-  border: 1px solid rgba(148, 163, 184, 0.2);
+  border: 1px solid var(--line);
   border-radius: 24px;
 
-  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+  box-shadow: var(--card-shadow);
 
   backdrop-filter: blur(12px);
 }
@@ -601,7 +675,7 @@ button:disabled {
 }
 
 /* =========================================
-   8. STATISTICS
+   10. STATISTICS
 ========================================= */
 
 .hero-score {
@@ -634,16 +708,16 @@ button:disabled {
   padding: 20px 18px;
 
   border-radius: 22px;
-  border: 1px solid rgba(148, 163, 184, 0.2);
+  border: 1px solid var(--line);
 
-  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.04);
+  box-shadow: var(--card-shadow);
 }
 
 .metric-card.indigo {
   background: linear-gradient(
     135deg,
     rgba(99, 102, 241, 0.08),
-    rgba(255, 255, 255, 0.82)
+    var(--panel-strong)
   );
 }
 
@@ -651,7 +725,7 @@ button:disabled {
   background: linear-gradient(
     135deg,
     rgba(6, 182, 212, 0.08),
-    rgba(255, 255, 255, 0.82)
+    var(--panel-strong)
   );
 }
 
@@ -659,7 +733,7 @@ button:disabled {
   background: linear-gradient(
     135deg,
     rgba(245, 158, 11, 0.09),
-    rgba(255, 255, 255, 0.82)
+    var(--panel-strong)
   );
 }
 
@@ -667,7 +741,7 @@ button:disabled {
   background: linear-gradient(
     135deg,
     rgba(16, 185, 129, 0.08),
-    rgba(255, 255, 255, 0.82)
+    var(--panel-strong)
   );
 }
 
@@ -684,6 +758,7 @@ button:disabled {
 
 .metric-card strong {
   font-size: clamp(1.5rem, 3vw, 2.1rem);
+  color: var(--text);
 }
 
 .metric-card small {
@@ -691,7 +766,7 @@ button:disabled {
 }
 
 /* =========================================
-   9. DASHBOARD PANELS
+   11. DASHBOARD PANELS
 ========================================= */
 
 .mid-grid,
@@ -735,6 +810,7 @@ button:disabled {
 .detail-card h3 {
   margin-top: 6px;
   font-size: 1.45rem;
+  color: var(--text);
 }
 
 .progress-bar {
@@ -779,7 +855,7 @@ button:disabled {
 }
 
 /* =========================================
-   10. BADGES AND PILLS
+   12. BADGES AND PILLS
 ========================================= */
 
 .mini-pill,
@@ -830,12 +906,12 @@ button:disabled {
 }
 
 .critical-chip.muted {
-  background: rgba(148, 163, 184, 0.08);
+  background: var(--surface-hover);
   color: var(--text-soft);
 }
 
 /* =========================================
-   11. WORKLOAD
+   13. WORKLOAD
 ========================================= */
 
 .workload-grid {
@@ -877,6 +953,10 @@ button:disabled {
 .workload-header strong,
 .workload-header small {
   display: block;
+}
+
+.workload-header strong {
+  color: var(--text);
 }
 
 .workload-header small {
@@ -945,7 +1025,7 @@ button:disabled {
 }
 
 /* =========================================
-   12. TABLES
+   14. TABLES
 ========================================= */
 
 .table-panel {
@@ -967,16 +1047,16 @@ button:disabled {
   text-transform: uppercase;
 
   color: var(--text-soft);
-  background: rgba(148, 163, 184, 0.03);
+  background: var(--surface-hover);
 }
 
 .table-panel tbody tr {
-  border-top: 1px solid rgba(148, 163, 184, 0.12);
+  border-top: 1px solid var(--line);
   transition: background 0.2s ease;
 }
 
 .table-panel tbody tr:hover {
-  background: rgba(99, 102, 241, 0.03);
+  background: var(--surface-hover);
 }
 
 .table-panel td {
@@ -1000,7 +1080,7 @@ button:disabled {
 
   border-radius: 999px;
 
-  background: rgba(148, 163, 184, 0.08);
+  background: var(--surface-hover);
   color: var(--text-soft);
 }
 
@@ -1069,8 +1149,8 @@ button:disabled {
 .pill-badge {
   padding: 6px 8px;
 
-  background: rgba(148, 163, 184, 0.08);
-  border: 1px solid rgba(148, 163, 184, 0.16);
+  background: var(--surface-hover);
+  border: 1px solid var(--line);
 
   color: var(--text-soft);
 }
@@ -1082,7 +1162,7 @@ button:disabled {
 }
 
 /* =========================================
-   13. GRAPH
+   15. GRAPH
 ========================================= */
 
 .graph-panel {
@@ -1113,7 +1193,7 @@ button:disabled {
 }
 
 /* =========================================
-   14. DETAIL AND INSIGHT PANELS
+   16. DETAIL AND INSIGHT PANELS
 ========================================= */
 
 .detail-grid {
@@ -1175,7 +1255,7 @@ button:disabled {
   position: absolute;
   inset: 16px;
 
-  background: rgba(255, 255, 255, 0.9);
+  background: var(--panel-strong);
   border-radius: 50%;
 }
 
@@ -1218,7 +1298,7 @@ button:disabled {
 
   padding: 10px 0;
 
-  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+  border-bottom: 1px solid var(--line);
 }
 
 .workload-item:last-child {
@@ -1252,12 +1332,16 @@ button:disabled {
   display: block;
 }
 
+.workload-meta strong {
+  color: var(--text);
+}
+
 .workload-meta small {
   color: var(--text-soft);
 }
 
 /* =========================================
-   15. SIMULATOR
+   17. SIMULATOR
 ========================================= */
 
 .simulator-panel {
@@ -1302,6 +1386,7 @@ button:disabled {
 
 .slider-copy strong {
   font-size: 0.95rem;
+  color: var(--text);
 }
 
 .slider-control {
@@ -1319,8 +1404,8 @@ button:disabled {
 
   border-radius: 10px;
 
-  border: 1px solid rgba(148, 163, 184, 0.18);
-  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid var(--line);
+  background: var(--panel-strong);
 
   color: var(--text);
 }
@@ -1333,10 +1418,11 @@ button:disabled {
 .slider-value {
   text-align: right;
   font-weight: 800;
+  color: var(--text);
 }
 
 /* =========================================
-   16. MODALS
+   18. MODALS
 ========================================= */
 
 .modal-overlay {
@@ -1348,7 +1434,7 @@ button:disabled {
   display: grid;
   place-items: center;
 
-  background: rgba(15, 23, 42, 0.58);
+  background: rgba(15, 23, 42, 0.65);
 
   padding: 16px;
 
@@ -1367,11 +1453,11 @@ button:disabled {
 
   border-radius: 24px;
 
-  background: #ffffff;
+  background: var(--panel-strong);
 
-  border: 1px solid rgba(148, 163, 184, 0.2);
+  border: 1px solid var(--line);
 
-  box-shadow: 0 28px 54px rgba(15, 23, 42, 0.22);
+  box-shadow: var(--shadow);
 
   padding: 26px;
 }
@@ -1382,7 +1468,9 @@ button:disabled {
   color: var(--text);
 }
 
-/* FIXED FORM LAYOUT */
+/* =========================================
+   19. FORM LAYOUT
+========================================= */
 
 .form-group {
   display: flex;
@@ -1415,10 +1503,10 @@ button:disabled {
 
   padding: 12px 14px;
 
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--input-border);
   border-radius: 9px;
 
-  background: #ffffff;
+  background: var(--input-bg);
   color: var(--text);
 
   font-size: 14px;
@@ -1429,8 +1517,8 @@ button:disabled {
 
 .form-group input::placeholder,
 .form-group textarea::placeholder {
-  color: #94a3b8;
-  opacity: 1;
+  color: var(--text-soft);
+  opacity: 0.75;
 }
 
 .form-group input:focus,
@@ -1455,7 +1543,7 @@ button:disabled {
   margin-top: 22px;
 }
 
-/* EXISTING MODAL FORM SUPPORT */
+/* Existing modal form support */
 
 .modal-form {
   display: flex;
@@ -1481,9 +1569,9 @@ button:disabled {
 
   border-radius: 12px;
 
-  border: 1px solid rgba(148, 163, 184, 0.2);
+  border: 1px solid var(--line);
 
-  background: #ffffff;
+  background: var(--input-bg);
   color: var(--text);
 
   outline: none;
@@ -1494,7 +1582,216 @@ button:disabled {
 }
 
 /* =========================================
-   17. RESPONSIVE DESIGN
+   20. THEME TOGGLE
+========================================= */
+
+.theme-toggle {
+  display: grid;
+  place-items: center;
+
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+
+  border-radius: 12px;
+
+  background: rgba(148, 163, 184, 0.08);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+
+  color: white;
+
+  transition: all 0.2s ease;
+}
+
+.theme-toggle:hover {
+  transform: translateY(-2px);
+  background: rgba(99, 102, 241, 0.2);
+}
+
+:root[data-theme="dark"] .theme-toggle {
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.12);
+  border-color: rgba(251, 191, 36, 0.25);
+}
+
+/* =========================================
+   21. DARK MODE COMPONENT OVERRIDES
+========================================= */
+
+/* Main surfaces */
+
+:root[data-theme="dark"] .topbar,
+:root[data-theme="dark"] .glass-panel,
+:root[data-theme="dark"] .progress-panel,
+:root[data-theme="dark"] .insight-panel,
+:root[data-theme="dark"] .info-card,
+:root[data-theme="dark"] .score-panel,
+:root[data-theme="dark"] .detail-card,
+:root[data-theme="dark"] .simulator-panel,
+:root[data-theme="dark"] .table-panel,
+:root[data-theme="dark"] .graph-panel {
+  background: var(--panel);
+  border-color: var(--line);
+  color: var(--text);
+  box-shadow: var(--shadow);
+}
+
+/* Navbar controls */
+
+:root[data-theme="dark"] .topbar-search,
+:root[data-theme="dark"] .secondary-button,
+:root[data-theme="dark"] .ghost-button,
+:root[data-theme="dark"] .shortcut,
+:root[data-theme="dark"] .slider-control button {
+  background: rgba(148, 163, 184, 0.09);
+  border-color: var(--line);
+  color: var(--text);
+}
+
+:root[data-theme="dark"] .topbar-search input {
+  background: transparent;
+  color: var(--text);
+}
+
+/* Dropdowns and modals */
+
+:root[data-theme="dark"] .notification-dropdown,
+:root[data-theme="dark"] .modal-card {
+  background: #17243a;
+  border-color: var(--line);
+  color: var(--text);
+}
+
+:root[data-theme="dark"] .notification-dropdown p,
+:root[data-theme="dark"] .modal-card h2,
+:root[data-theme="dark"] .form-group label {
+  color: var(--text);
+}
+
+/* Forms */
+
+:root[data-theme="dark"] .form-group input,
+:root[data-theme="dark"] .form-group textarea,
+:root[data-theme="dark"] .form-group select,
+:root[data-theme="dark"] .modal-form input,
+:root[data-theme="dark"] .modal-form select,
+:root[data-theme="dark"] .modal-form textarea {
+  background: var(--input-bg);
+  border-color: var(--line);
+  color: var(--text);
+}
+
+/* Hero */
+
+:root[data-theme="dark"] .hero-band {
+  background: linear-gradient(
+    135deg,
+    rgba(99, 102, 241, 0.16),
+    rgba(6, 182, 212, 0.09)
+  );
+}
+
+/* Metric cards */
+
+:root[data-theme="dark"] .metric-card.indigo,
+:root[data-theme="dark"] .metric-card.cyan,
+:root[data-theme="dark"] .metric-card.amber,
+:root[data-theme="dark"] .metric-card.emerald {
+  background: linear-gradient(
+    135deg,
+    rgba(99, 102, 241, 0.13),
+    rgba(23, 33, 54, 0.92)
+  );
+
+  border-color: var(--line);
+}
+
+/* Tables */
+
+:root[data-theme="dark"] .table-panel thead th {
+  background: rgba(148, 163, 184, 0.07);
+  color: var(--text-soft);
+}
+
+:root[data-theme="dark"] .table-panel tbody tr {
+  border-color: var(--line);
+}
+
+:root[data-theme="dark"] .table-panel tbody tr:hover {
+  background: rgba(99, 102, 241, 0.09);
+}
+
+:root[data-theme="dark"] .table-panel td {
+  color: var(--text);
+}
+
+/* Score ring */
+
+:root[data-theme="dark"] .score-ring::before {
+  background: #17243a;
+}
+
+/* Status */
+
+:root[data-theme="dark"] .project-status-badge {
+  color: #6ee7b7;
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.22);
+}
+
+/* =========================================
+   22. GLOBAL TRANSITIONS
+========================================= */
+
+body,
+.project-shell,
+.sidebar-panel,
+.main-shell,
+.topbar,
+.glass-panel,
+.metric-card,
+.modal-card,
+.notification-dropdown,
+.progress-panel,
+.insight-panel,
+.info-card,
+.score-panel,
+.detail-card,
+.simulator-panel,
+.table-panel,
+.graph-panel {
+  transition:
+    background-color 0.25s ease,
+    color 0.25s ease,
+    border-color 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+/* =========================================
+   23. ACCESSIBILITY
+========================================= */
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
+
+/* =========================================
+   24. RESPONSIVE DESIGN
 ========================================= */
 
 @media (max-width: 1260px) {
@@ -1586,4 +1883,119 @@ button:disabled {
   .graph-panel {
     height: 380px;
   }
+}
+
+/* =====================================
+   PROJECTPULSE - DARK THEME FIX
+   Paste at the very end of index.css
+===================================== */
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+:root[data-theme="dark"] body,
+:root[data-theme="dark"] .project-shell,
+:root[data-theme="dark"] .main-shell,
+:root[data-theme="dark"] .page-content {
+  background: #0b1020;
+  color: #e5e7eb;
+}
+
+/* Panels and cards */
+:root[data-theme="dark"] .glass-panel,
+:root[data-theme="dark"] .stat-card,
+:root[data-theme="dark"] .workload-card,
+:root[data-theme="dark"] .insight-panel,
+:root[data-theme="dark"] .simulator-panel,
+:root[data-theme="dark"] .mini-card,
+:root[data-theme="dark"] .project-switcher,
+:root[data-theme="dark"] .dashboard-card,
+:root[data-theme="dark"] .chart-card {
+  background: #151d30 !important;
+  color: #e5e7eb !important;
+  border-color: #29344a !important;
+}
+
+/* Header and navigation */
+:root[data-theme="dark"] .topbar {
+  background: #111a2b !important;
+  border-color: #29344a !important;
+}
+
+:root[data-theme="dark"] .sidebar-panel {
+  background: #101827 !important;
+  border-color: #29344a !important;
+}
+
+/* Tables */
+:root[data-theme="dark"] table,
+:root[data-theme="dark"] thead,
+:root[data-theme="dark"] tbody,
+:root[data-theme="dark"] tr,
+:root[data-theme="dark"] th,
+:root[data-theme="dark"] td {
+  background-color: transparent;
+  color: #e5e7eb;
+  border-color: #29344a !important;
+}
+
+:root[data-theme="dark"] th {
+  background: #1b263b !important;
+}
+
+:root[data-theme="dark"] tr:hover td {
+  background: #1b263b !important;
+}
+
+/* Forms and search */
+:root[data-theme="dark"] input,
+:root[data-theme="dark"] textarea,
+:root[data-theme="dark"] select {
+  background: #101827 !important;
+  color: #f1f5f9 !important;
+  border-color: #354158 !important;
+}
+
+:root[data-theme="dark"] input::placeholder,
+:root[data-theme="dark"] textarea::placeholder {
+  color: #8491a7 !important;
+}
+
+/* Dropdowns */
+:root[data-theme="dark"] option {
+  background: #151d30;
+  color: #e5e7eb;
+}
+
+/* Modals */
+:root[data-theme="dark"] .modal,
+:root[data-theme="dark"] .modal-content,
+:root[data-theme="dark"] .modal-card,
+:root[data-theme="dark"] .modal-body {
+  background: #151d30 !important;
+  color: #e5e7eb !important;
+  border-color: #29344a !important;
+}
+
+/* Secondary buttons */
+:root[data-theme="dark"] .secondary-button,
+:root[data-theme="dark"] .ghost-button {
+  background: #1b263b;
+  color: #e5e7eb;
+  border-color: #354158;
+}
+
+/* Text */
+:root[data-theme="dark"] .subtitle,
+:root[data-theme="dark"] .muted,
+:root[data-theme="dark"] .text-muted {
+  color: #9ca9bd !important;
+}
+
+/* Progress and graph backgrounds */
+:root[data-theme="dark"] .progress-track,
+:root[data-theme="dark"] .progress-bar-bg,
+:root[data-theme="dark"] .graph-container {
+  background: #263249 !important;
 }
