@@ -1,4 +1,3 @@
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -9,59 +8,48 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(uuid())
+  id        String    @id @default(uuid())
   name      String
-  email     String   @unique
+  email     String    @unique
   password  String
-
+  createdAt DateTime  @default(now())
   projects  Project[]
-
-  createdAt DateTime @default(now())
 }
 
 model Project {
   id          String   @id @default(uuid())
   title       String
   description String?
-
   startDate   DateTime
   deadline    DateTime
-
-  ownerId String
-  owner   User @relation(fields: [ownerId], references: [id])
-
-  tasks Task[]
-
-  createdAt DateTime @default(now())
+  ownerId     String
+  createdAt   DateTime @default(now())
+  owner       User     @relation(fields: [ownerId], references: [id])
+  tasks       Task[]
 }
 
 model Task {
-  id            String   @id @default(uuid())
+  id            String       @id @default(uuid())
   title         String
   duration      Int
   status        String
   assignee      String?
-
   earliestStart Int?
   latestStart   Int?
   slack         Int?
-
-  projectId String
-  project   Project @relation(fields: [projectId], references: [id])
-
-  createdAt DateTime @default(now())
-
-  dependencies Dependency[] @relation("TaskDependencies")
-  dependents   Dependency[] @relation("TaskDependents")
+  projectId     String
+  createdAt     DateTime     @default(now())
+  dependents    Dependency[] @relation("TaskDependents")
+  dependencies  Dependency[] @relation("TaskDependencies")
+  project       Project      @relation(fields: [projectId], references: [id])
 }
 
 model Dependency {
   id              String @id @default(uuid())
   taskId          String
   dependsOnTaskId String
-
-  task      Task @relation("TaskDependencies", fields: [taskId], references: [id])
-  dependsOn Task @relation("TaskDependents", fields: [dependsOnTaskId], references: [id])
+  dependsOn       Task   @relation("TaskDependents", fields: [dependsOnTaskId], references: [id])
+  task            Task   @relation("TaskDependencies", fields: [taskId], references: [id])
 
   @@unique([taskId, dependsOnTaskId])
 }
@@ -71,6 +59,5 @@ model Simulation {
   taskId            String
   originalDuration  Int
   simulatedDuration Int
-
-  createdAt DateTime @default(now())
+  createdAt         DateTime @default(now())
 }
