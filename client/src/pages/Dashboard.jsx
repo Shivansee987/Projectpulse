@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import {
   FolderKanban,
   RefreshCw,
@@ -15,6 +15,8 @@ import {
 import Layout from "../components/layout/Layout";
 import api from "../services/api";
 import ProjectReport from "../components/dashboard/ProjectReport";
+import DailyQuote from "../components/dashboard/DailyQuote";
+import ActivityStreak from "../components/dashboard/ActivityStreak";
 
 const emptyProjectForm = {
   title: "",
@@ -315,6 +317,11 @@ function Dashboard() {
             <FolderKanban size={17} /> New project
           </button>
         </section>
+
+      <div className="dashboard-motivation-grid">
+  <DailyQuote />
+  <ActivityStreak />
+</div>
 
         {error && (
           <div className="phase2-alert" role="alert">

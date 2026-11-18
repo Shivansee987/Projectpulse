@@ -3975,3 +3975,223 @@ a:focus-visible {
     transition: none;
   }
 }
+
+/* =========================================
+   DAILY INSPIRATION + ACTIVITY STREAK
+========================================= */
+
+.daily-quote-card,
+.activity-streak-card {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  min-height: 210px;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+  padding: 25px;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  box-shadow: var(--card-shadow);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.daily-quote-card:hover,
+.activity-streak-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow);
+}
+
+/* Daily inspiration */
+
+.daily-quote-card {
+  background:
+    radial-gradient(circle at 90% 10%, rgba(255,255,255,0.7), transparent 35%),
+    linear-gradient(135deg, #f6c8d5, #dce5f0);
+  color: #142b4a;
+}
+
+.daily-quote-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.daily-quote-label,
+.activity-streak-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 0.73rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.daily-quote-favorite {
+  display: grid;
+  width: 39px;
+  height: 39px;
+  place-items: center;
+  border: 1px solid rgba(20,43,74,0.15);
+  border-radius: 12px;
+  background: rgba(255,255,255,0.45);
+  color: #142b4a;
+}
+
+.daily-quote-favorite:hover,
+.daily-quote-favorite.is-favorite {
+  background: white;
+  color: #c94e72;
+}
+
+.daily-quote-text {
+  max-width: 620px;
+  margin: 25px 0;
+  font-size: clamp(1.2rem, 2.2vw, 1.7rem);
+  font-weight: 750;
+  line-height: 1.45;
+  letter-spacing: -0.035em;
+}
+
+.daily-quote-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 0.83rem;
+  font-weight: 700;
+}
+
+.daily-quote-category {
+  padding: 7px 12px;
+  border: 1px solid rgba(20,43,74,0.12);
+  border-radius: 999px;
+  background: rgba(255,255,255,0.45);
+}
+
+/* Activity streak */
+
+.activity-streak-card {
+  flex-direction: row;
+  align-items: center;
+  gap: 20px;
+  background:
+    radial-gradient(circle at 90% 15%, rgba(246,200,213,0.25), transparent 35%),
+    var(--panel);
+  color: var(--text);
+}
+
+.activity-streak-label {
+  color: var(--text-soft);
+}
+
+.activity-streak-card h2 {
+  margin-top: 17px;
+  font-size: clamp(1.8rem, 3vw, 2.5rem);
+  letter-spacing: -0.05em;
+  color: var(--text);
+}
+
+.activity-streak-card p {
+  margin-top: 8px;
+  color: var(--text-soft);
+  font-size: 0.9rem;
+}
+
+.activity-streak-record {
+  display: flex;
+  min-width: 112px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 18px 15px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface-muted);
+  color: var(--text);
+}
+
+.activity-streak-record svg {
+  color: #d18b35;
+}
+
+.activity-streak-record strong {
+  font-size: 1.8rem;
+}
+
+.activity-streak-record span {
+  color: var(--text-soft);
+  font-size: 0.7rem;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* Dashboard layout */
+
+.dashboard-motivation-grid {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 18px;
+}
+
+:root[data-theme="dark"] .daily-quote-card {
+  background: linear-gradient(135deg, #344b68, #503b52);
+  color: #fff4f7;
+}
+
+:root[data-theme="dark"] .daily-quote-label,
+:root[data-theme="dark"] .daily-quote-text,
+:root[data-theme="dark"] .daily-quote-footer {
+  color: #fff4f7;
+}
+
+:root[data-theme="dark"] .daily-quote-category,
+:root[data-theme="dark"] .daily-quote-favorite {
+  background: rgba(255,255,255,0.12);
+  border-color: rgba(255,255,255,0.2);
+  color: #fff4f7;
+}
+
+@media (max-width: 760px) {
+  .dashboard-motivation-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .daily-quote-card,
+  .activity-streak-card {
+    min-height: 190px;
+    padding: 21px;
+  }
+}
+
+@media (max-width: 420px) {
+  .activity-streak-card {
+    align-items: flex-start;
+    gap: 12px;
+    padding: 18px;
+  }
+
+  .activity-streak-record {
+    min-width: 95px;
+    padding: 14px 9px;
+  }
+
+  .activity-streak-card h2 {
+    font-size: 1.65rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .daily-quote-card,
+  .activity-streak-card {
+    transition: none;
+  }
+
+  .daily-quote-card:hover,
+  .activity-streak-card:hover {
+    transform: none;
+  }
+}
