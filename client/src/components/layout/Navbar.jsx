@@ -1,31 +1,35 @@
-
 import { useState } from "react";
 import {
   Bell,
   FolderPlus,
+  Menu,
   Plus,
   Search,
   X,
 } from "lucide-react";
 import { useLocation } from "react-router-dom";
 
+const pageTitles = {
+  "/": "Overview",
+  "/projects": "Projects",
+  "/tasks": "Tasks",
+  "/dependencies": "Dependencies",
+  "/simulator": "What-If Simulator",
+  "/analytics": "Analytics",
+};
+
 function Navbar({
-  activeTab,
+  menuButtonRef,
+  mobileNavOpen,
+  onMenuToggle,
   onTaskModalOpen,
   onProjectModalOpen,
   onSearch,
 }) {
   const [searchText, setSearchText] = useState("");
   const [showNotifications, setShowNotifications] = useState(false);
-
   const location = useLocation();
-
-  // Navbar should appear only on Overview
-  const isOverview = location.pathname === "/";
-
-  if (!isOverview) {
-    return null;
-  }
+  const pageTitle = pageTitles[location.pathname] || "ProjectPulse";
 
   const handleSearch = (event) => {
     const value = event.target.value;
@@ -35,106 +39,119 @@ function Navbar({
 
   return (
     <header className="topbar">
-      <div className="topbar-search">
-        <Search size={16} />
-
-        <input
-          type="text"
-          placeholder="Search projects, tasks, risks..."
-          value={searchText}
-          onChange={handleSearch}
-        />
-
-        {searchText && (
-          <button
-            type="button"
-            className="ghost-button"
-            onClick={() => {
-              setSearchText("");
-              onSearch?.("");
-            }}
-            aria-label="Clear search"
-          >
-            <X size={15} />
-          </button>
-        )}
-
-        <span className="shortcut">Ctrl K</span>
+      <div className="topbar-leading">
+        <button
+          ref={menuButtonRef}
+          type="button"
+          className="mobile-menu-toggle ghost-button"
+          onClick={onMenuToggle}
+          aria-label={mobileNavOpen ? "Close navigation menu" : "Open navigation menu"}
+          aria-expanded={mobileNavOpen}
+          aria-controls="primary-navigation"
+        >
+          {mobileNavOpen ? (
+            <X size={19} aria-hidden="true" />
+          ) : (
+            <Menu size={19} aria-hidden="true" />
+          )}
+        </button>
+        <div className="topbar-page-title">
+          <span className="eyebrow">ProjectPulse</span>
+          <p>{pageTitle}</p>
+        </div>
       </div>
 
-      <div className="topbar-actions">
-        <div className="project-status-badge">
-          <span className="dot" />
-          Dashboard
+      {onSearch && (
+        <div className="topbar-search">
+          <Search size={17} aria-hidden="true" />
+          <input
+            type="search"
+            aria-label="Search projects, tasks, and risks"
+            placeholder="Search projects, tasks, risks..."
+            value={searchText}
+            onChange={handleSearch}
+          />
+          {searchText && (
+            <button
+              type="button"
+              className="ghost-button search-clear"
+              onClick={() => {
+                setSearchText("");
+                onSearch?.("");
+              }}
+              aria-label="Clear search"
+            >
+              <X size={15} aria-hidden="true" />
+            </button>
+          )}
+          {!searchText && <span className="shortcut">Ctrl K</span>}
         </div>
+      )}
 
-        {/* Notifications */}
-        <div style={{ position: "relative" }}>
+      <div className="topbar-actions">
+        <div className="notification-anchor">
           <button
             type="button"
-            className="ghost-button"
+            className="ghost-button notification-trigger"
             onClick={() =>
               setShowNotifications((current) => !current)
             }
             aria-label="Notifications"
+            aria-expanded={showNotifications}
+            aria-haspopup="dialog"
+            aria-controls="notification-dropdown"
             title="Notifications"
           >
-            <Bell size={16} />
+            <Bell size={18} aria-hidden="true" />
           </button>
 
           {showNotifications && (
             <div
-              className="glass-panel"
-              style={{
-                position: "absolute",
-                top: "45px",
-                right: 0,
-                width: "270px",
-                padding: "18px",
-                zIndex: 1000,
-              }}
+              id="notification-dropdown"
+              className="notification-dropdown"
+              role="dialog"
+              aria-label="Notifications"
             >
-              <h3>Notifications</h3>
-
-              <p
-                className="subtitle"
-                style={{ marginTop: "10px" }}
-              >
-                You're all caught up. New notifications will
-                appear here when notification support is added.
+              <div className="notification-heading">
+                <h2>Notifications</h2>
+                <button
+                  type="button"
+                  className="ghost-button"
+                  onClick={() => setShowNotifications(false)}
+                  aria-label="Close notifications"
+                >
+                  <X size={16} aria-hidden="true" />
+                </button>
+              </div>
+              <p>
+                You&apos;re all caught up. New notifications will appear here
+                when notification support is added.
               </p>
-
-              <button
-                type="button"
-                className="secondary-button"
-                style={{ marginTop: "14px" }}
-                onClick={() => setShowNotifications(false)}
-              >
-                Close
-              </button>
             </div>
           )}
         </div>
 
-        {/* New Task */}
-        <button
-          type="button"
-          className="primary-button"
-          onClick={onTaskModalOpen}
-        >
-          <Plus size={16} />
-          New Task
-        </button>
+        {onTaskModalOpen && (
+          <button
+            type="button"
+            className="primary-button"
+            onClick={onTaskModalOpen}
+          >
+            <Plus size={17} aria-hidden="true" />
+            <span>New Task</span>
+          </button>
+        )}
 
-        {/* New Project */}
-        <button
-          type="button"
-          className="secondary-button"
-          onClick={onProjectModalOpen}
-        >
-          <FolderPlus size={16} />
-          New Project
-        </button>
+        {onProjectModalOpen && (
+          <button
+            type="button"
+            className="secondary-button"
+            onClick={onProjectModalOpen}
+          >
+            <FolderPlus size={17} aria-hidden="true" />
+            <span>New Project</span>
+          </button>
+        )}
       </div>
     </header>
   );

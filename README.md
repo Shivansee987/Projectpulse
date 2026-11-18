@@ -328,33 +328,32 @@ npm install
 
 
 
-\### 3. Configure Environment Variables
+\### 3. Configure Backend Environment Variables
 
-
-
-Create a `.env` file inside the `server` directory.
-
-
+Create a `.env` file inside the `server` directory:
 
 ```env
-
-DATABASE\_URL="YOUR\_POSTGRESQL\_CONNECTION\_STRING"
-
+DATABASE_URL="YOUR_POSTGRESQL_CONNECTION_STRING"
+JWT_SECRET="GENERATE_A_LONG_RANDOM_SECRET"
+# Optional; defaults to 1d
+JWT_EXPIRES_IN="1d"
+# Optional; defaults to 5000
+PORT=5000
 ```
 
+Keep backend environment values private. Never commit `server/.env`, database credentials, or JWT secrets.
 
+\### 4. Configure the Frontend API URL
 
-Replace the placeholder with your actual database connection string.
+Create `client/.env.local` using `client/.env.example` as a template. The local development value is:
 
+```env
+VITE_API_URL=http://localhost:5000/api
+```
 
+For deployment, set `VITE_API_URL` in the frontend build environment to the deployed backend API URL ending in `/api`. Vite embeds `VITE_*` values in browser assets, so this URL is public configuration; never put credentials or other secrets in it. If unset, local development uses the localhost fallback, while production builds require the variable to be set.
 
-\*\*Security:\*\* Never commit `.env` files, database credentials, or other secrets to GitHub.
-
-
-
-\### 4. Generate Prisma Client
-
-
+\### 5. Generate Prisma Client
 
 ```bash
 
@@ -362,11 +361,7 @@ npx prisma generate
 
 ```
 
-
-
-\### 5. Synchronize the Database
-
-
+\### 6. Synchronize the Database
 
 ```bash
 
@@ -374,13 +369,17 @@ npx prisma db push
 
 ```
 
+\### 7. Run the Application
 
+Run the backend and frontend in separate terminals from the repository root:
 
-\### 6. Run the Backend
+```bash
+npm --prefix server run dev
+```
 
-
-
-Use the development command configured in `server/package.json`.
+```bash
+npm --prefix client run dev
+```
 
 
 

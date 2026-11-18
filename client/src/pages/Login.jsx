@@ -1,10 +1,22 @@
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import {
+  ArrowRight,
+  LockKeyhole,
+  Mail,
+  Moon,
+  Sparkles,
+  Sun,
+  UserRound,
+} from "lucide-react";
 import api from "../services/api";
+import { useTheme } from "../components/layout/ThemeContext";
 
 function Login() {
   const navigate = useNavigate();
+  const { theme, toggleTheme } = useTheme();
+  const ThemeIcon = theme === "dark" ? Sun : Moon;
 
   const [isRegister, setIsRegister] = useState(false);
   const [name, setName] = useState("");
@@ -53,102 +65,157 @@ function Login() {
   };
 
   return (
-    <div className="page-shell">
-      <div
-        className="glass-panel"
-        style={{
-          maxWidth: "420px",
-          margin: "80px auto",
-          padding: "32px",
-        }}
+    <main className="auth-page">
+      <button
+        type="button"
+        className="theme-toggle auth-theme-toggle"
+        onClick={toggleTheme}
+        aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+        title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
       >
-        <p className="eyebrow">PROJECT PULSE</p>
+        <ThemeIcon size={18} aria-hidden="true" />
+      </button>
 
-        <h1>{isRegister ? "Create account" : "Welcome back"}</h1>
+      <div className="auth-layout">
+        <section className="auth-intro" aria-label="About ProjectPulse">
+          <div className="auth-brand">
+            <span className="auth-brand-mark" aria-hidden="true">P</span>
+            <span>ProjectPulse</span>
+          </div>
+          <div className="auth-intro-copy">
+            <span className="auth-kicker">
+              <Sparkles size={15} aria-hidden="true" />
+              Plan with clarity
+            </span>
+            <h1>Make meaningful progress, together.</h1>
+            <p>
+              Bring your projects, tasks, and timelines into one calm,
+              considered workspace.
+            </p>
+          </div>
+          <div className="auth-decoration" aria-hidden="true">
+            <span />
+            <span />
+            <span />
+          </div>
+        </section>
 
-        <p className="subtitle">
-          {isRegister
-            ? "Register your new account"
-            : "Login to your account"}
-        </p>
+        <section className="auth-card" aria-labelledby="auth-title">
+          <div className="auth-card-heading">
+            <p className="eyebrow">
+              {isRegister ? "GET STARTED" : "YOUR WORKSPACE"}
+            </p>
+            <h2 id="auth-title">
+              {isRegister ? "Create your account" : "Welcome back"}
+            </h2>
+            <p className="subtitle">
+              {isRegister
+                ? "Set up your space and bring your next project to life."
+                : "Sign in to pick up where your team left off."}
+            </p>
+          </div>
 
-        <form onSubmit={handleSubmit} className="modal-form">
-          {isRegister && (
-            <label>
-              Name
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Enter your name"
-                required
-              />
+          <form onSubmit={handleSubmit} className="auth-form">
+            {isRegister && (
+              <label className="auth-field">
+                <span>Name</span>
+                <span className="auth-input-wrap">
+                  <UserRound size={17} aria-hidden="true" />
+                  <input
+                    type="text"
+                    autoComplete="name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Enter your name"
+                    required
+                  />
+                </span>
+              </label>
+            )}
+
+            <label className="auth-field">
+              <span>Email</span>
+              <span className="auth-input-wrap">
+                <Mail size={17} aria-hidden="true" />
+                <input
+                  type="email"
+                  autoComplete="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  required
+                />
+              </span>
             </label>
-          )}
 
-          <label>
-            Email
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email"
-              required
-            />
-          </label>
+            <label className="auth-field">
+              <span>Password</span>
+              <span className="auth-input-wrap">
+                <LockKeyhole size={17} aria-hidden="true" />
+                <input
+                  type="password"
+                  autoComplete={isRegister ? "new-password" : "current-password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter your password"
+                  minLength={8}
+                  required
+                />
+              </span>
+              {isRegister && (
+                <small className="auth-field-hint">
+                  Use at least 8 characters.
+                </small>
+              )}
+            </label>
 
-          <label>
-            Password
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your password"
-              minLength={8}
-              required
-            />
-          </label>
+            {error && (
+              <p className="auth-feedback auth-error" role="alert">
+                {error}
+              </p>
+            )}
 
-          {error && (
-            <p style={{ color: "#dc2626" }}>{error}</p>
-          )}
+            {message && (
+              <p className="auth-feedback auth-success" role="status">
+                {message}
+              </p>
+            )}
 
-          {message && (
-            <p style={{ color: "green" }}>{message}</p>
-          )}
+            <button
+              type="submit"
+              className="primary-button auth-submit"
+              disabled={loading}
+            >
+              <span>
+                {loading
+                  ? "Please wait..."
+                  : isRegister
+                    ? "Create account"
+                    : "Sign in"}
+              </span>
+              {!loading && <ArrowRight size={17} aria-hidden="true" />}
+            </button>
+          </form>
 
-          <button
-            type="submit"
-            className="primary-button"
-            disabled={loading}
-          >
-            {loading
-              ? "Please wait..."
-              : isRegister
-                ? "Create Account"
-                : "Login"}
-          </button>
-        </form>
-
-        <p style={{ marginTop: "20px", textAlign: "center" }}>
-          {isRegister
-            ? "Already have an account? "
-            : "Don't have an account? "}
-
-          <button
-            type="button"
-            className="secondary-button"
-            onClick={() => {
-              setIsRegister(!isRegister);
-              setError("");
-              setMessage("");
-            }}
-          >
-            {isRegister ? "Login" : "Register"}
-          </button>
-        </p>
+          <p className="auth-switch">
+            {isRegister
+              ? "Already have an account?"
+              : "New to ProjectPulse?"}
+            <button
+              type="button"
+              className="auth-switch-button"
+              onClick={() => {
+                setIsRegister(!isRegister);
+                setError("");
+                setMessage("");
+              }}
+            >
+              {isRegister ? "Sign in" : "Create an account"}
+            </button>
+          </p>
+        </section>
       </div>
-    </div>
+    </main>
   );
 }
 

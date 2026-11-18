@@ -101,6 +101,7 @@ export const projectData = {
 
 export const navItems = [
   { key: "overview", label: "Overview" },
+  { key: "projects", label: "Projects" },
   { key: "task-list", label: "Task List" },
   { key: "dependencies", label: "Dependencies" },
   { key: "simulator", label: "What-If Simulator" },

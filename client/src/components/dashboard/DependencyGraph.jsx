@@ -15,11 +15,8 @@ import {
   GitBranch,
   Plus,
   Trash2,
-  Clock3,
   AlertTriangle,
   CheckCircle2,
-  ShieldAlert,
-  ListTodo,
   Activity,
 } from "lucide-react";
 
