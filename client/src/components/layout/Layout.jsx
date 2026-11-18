@@ -4,16 +4,18 @@ import { useLocation } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import Navbar from "./Navbar";
 import { useTheme } from "./ThemeContext";
+import useDeadlineReminders from "../../hooks/useDeadlineReminders";
 
 function Layout({
   children,
   activeTab,
   setActiveTab,
   onTaskModalOpen,
-  onProjectModalOpen,
   onSearch,
 }) {
   const { theme, toggleTheme } = useTheme();
+  const { notifications, loadError, storageError } =
+    useDeadlineReminders();
   const location = useLocation();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileNavState, setMobileNavState] = useState({
@@ -94,8 +96,10 @@ function Layout({
           mobileNavOpen={mobileNavOpen}
           onMenuToggle={toggleMobileNav}
           onTaskModalOpen={onTaskModalOpen}
-          onProjectModalOpen={onProjectModalOpen}
           onSearch={onSearch}
+          reminders={notifications}
+          reminderLoadError={loadError}
+          reminderStorageError={storageError}
         />
 
         <main className="page-content">{children}</main>

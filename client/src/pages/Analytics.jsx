@@ -22,12 +22,12 @@ import Layout from "../components/layout/Layout";
 import api from "../services/api";
 
 const colors = {
-  purple: "#7567F8",
-  blue: "#3B82F6",
-  green: "#16A36A",
-  orange: "#F59E0B",
-  red: "#EF4444",
-  gray: "#94A3B8",
+  purple: "var(--a-accent)",
+  blue: "var(--a-blue)",
+  green: "var(--a-green)",
+  orange: "var(--a-orange)",
+  red: "var(--a-red)",
+  gray: "var(--a-gray)",
 };
 
 const panel = {
@@ -36,7 +36,7 @@ const panel = {
   borderRadius: 18,
   padding: 22,
   minWidth: 0,
-  boxShadow: "0 5px 20px rgba(25,35,70,0.035)",
+  boxShadow: "var(--card-shadow)",
 };
 
 const muted = {
@@ -93,7 +93,7 @@ function formatDate(date) {
 
 function SectionTitle({ icon: Icon, title, subtitle }) {
   return (
-    <div style={{ marginBottom: 20 }}>
+    <div className="analytics-section-title" style={{ marginBottom: 20 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
         <Icon size={19} color={colors.purple} />
 
@@ -126,6 +126,7 @@ function MetricCard({
 }) {
   return (
     <div
+      className="analytics-metric-card"
       style={{
         ...panel,
         position: "relative",
@@ -164,7 +165,7 @@ function MetricCard({
             width: 44,
             height: 44,
             borderRadius: 14,
-            background: `${color}20`,
+            background: `color-mix(in srgb, ${color} 12%, transparent)`,
             color,
             display: "grid",
             placeItems: "center",
@@ -238,7 +239,7 @@ function ProgressBar({ label, value, color, detail }) {
             height: "100%",
             background: color,
             borderRadius: 20,
-            transition: "width .4s ease",
+            transition: "width 300ms ease",
           }}
         />
       </div>
@@ -264,6 +265,7 @@ function DonutChart({ items, total }) {
 
   return (
     <div
+      className="analytics-donut"
       style={{
         display: "flex",
         alignItems: "center",
@@ -511,6 +513,11 @@ function Analytics() {
     };
   }, [tasks, cpm]);
 
+  const completionProgress = Number.isFinite(analytics.progress)
+    ? Math.min(100, Math.max(0, analytics.progress))
+    : 0;
+  const completionRingCircumference = 2 * Math.PI * 52.5;
+
   const riskList = useMemo(() => {
     if (Array.isArray(risks)) return risks;
 
@@ -593,22 +600,35 @@ function Analytics() {
       <div className="page-shell analytics-theme">
         <style>{`
           .analytics-theme {
-            --a-panel: #ffffff;
-            --a-surface: #f8fafc;
-            --a-border: #e2e8f0;
-            --a-text: #1e293b;
-            --a-muted: #718096;
+            --a-panel: var(--panel);
+            --a-surface: var(--surface-muted);
+            --a-border: var(--line);
+            --a-text: var(--text);
+            --a-muted: var(--text-soft);
+            --a-accent: var(--color-navy);
+            --a-blue: #426184;
+            --a-green: #08744d;
+            --a-orange: #96510d;
+            --a-red: #a51d39;
+            --a-gray: #52657b;
             color: var(--a-text);
             max-width: 1600px;
             margin: 0 auto;
+            padding-bottom: 28px;
           }
 
           :root[data-theme="dark"] .analytics-theme {
-            --a-panel: #172033;
-            --a-surface: #202c40;
-            --a-border: #334155;
-            --a-text: #f1f5f9;
-            --a-muted: #94a3b8;
+            --a-panel: var(--panel);
+            --a-surface: var(--surface-muted);
+            --a-border: var(--line);
+            --a-text: var(--text);
+            --a-muted: var(--text-soft);
+            --a-accent: var(--color-pink);
+            --a-blue: #b8cce1;
+            --a-green: #73ddb0;
+            --a-orange: #ffd080;
+            --a-red: #ff9aab;
+            --a-gray: #c1ccda;
           }
 
           .analytics-theme select {
@@ -626,25 +646,121 @@ function Analytics() {
             background: var(--a-surface) !important;
             color: var(--a-text) !important;
             border-color: var(--a-border) !important;
+            border-radius: var(--radius-md);
           }
 
           .analytics-theme .analytics-warning {
-            background: #fef2f2 !important;
-            color: #991b1b !important;
-          }
-
-          :root[data-theme="dark"] .analytics-theme .analytics-warning {
-            background: #451f2b !important;
-            color: #fecaca !important;
+            background: rgba(180, 35, 64, 0.1) !important;
+            color: var(--a-red) !important;
+            border: 1px solid rgba(180, 35, 64, 0.24);
           }
 
           .analytics-theme button {
-            transition: all .2s ease;
+            transition: background-color 220ms ease, border-color 220ms ease,
+              color 220ms ease, box-shadow 220ms ease, transform 220ms ease;
+          }
+
+          .analytics-theme .analytics-project-hero {
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow);
+          }
+
+          .analytics-theme .analytics-surface:hover {
+            border-color: color-mix(in srgb, var(--a-accent) 42%, var(--a-border)) !important;
+          }
+
+          .analytics-theme .analytics-metric-card {
+            border: 1px solid var(--a-border) !important;
+            border-radius: var(--radius-lg) !important;
+            background: var(--a-panel) !important;
+            color: var(--a-text) !important;
+            box-shadow: var(--card-shadow) !important;
+            transition: transform 240ms ease, border-color 240ms ease,
+              box-shadow 240ms ease !important;
+          }
+
+          .analytics-theme .analytics-metric-card:hover {
+            transform: translateY(-2px);
+            border-color: color-mix(in srgb, var(--a-accent) 42%, var(--a-border)) !important;
+            box-shadow: var(--shadow) !important;
+          }
+
+          .analytics-theme .analytics-section-title > div:first-child {
+            gap: 11px !important;
+          }
+
+          .analytics-theme .analytics-donut {
+            filter: drop-shadow(0 8px 18px rgba(20, 43, 74, 0.1));
+            transition: transform 260ms ease;
+          }
+
+          .analytics-theme .analytics-donut:hover {
+            transform: scale(1.02);
+          }
+
+          .analytics-theme .analytics-risk-item {
+            border-color: var(--a-border) !important;
+            background: var(--a-panel) !important;
+          }
+
+          .analytics-theme .analytics-risk-item.analytics-risk-high > span {
+            background: rgba(180, 35, 64, 0.12) !important;
+            color: var(--a-red) !important;
+          }
+
+          .analytics-theme .analytics-risk-item.analytics-risk-medium > span {
+            background: rgba(150, 81, 13, 0.12) !important;
+            color: var(--a-orange) !important;
+          }
+
+          .analytics-theme .analytics-risk-item.analytics-risk-low > span {
+            background: rgba(8, 116, 77, 0.12) !important;
+            color: var(--a-green) !important;
+          }
+
+          .analytics-theme button:focus-visible,
+          .analytics-theme select:focus-visible {
+            outline: 3px solid var(--focus);
+            outline-offset: 3px;
+          }
+
+          @media (max-width: 760px) {
+            .analytics-theme .analytics-overview-grid,
+            .analytics-theme .analytics-detail-grid {
+              grid-template-columns: minmax(0, 1fr) !important;
+            }
+
+            .analytics-theme .analytics-schedule-metrics {
+              grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            }
           }
 
           @media(max-width: 600px) {
             .analytics-theme {
               padding: 0 2px;
+            }
+
+            .analytics-theme .analytics-project-hero {
+              padding: 20px !important;
+            }
+
+            .analytics-theme .analytics-kpi-grid {
+              grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            }
+
+            .analytics-theme .analytics-schedule-metrics {
+              grid-template-columns: minmax(0, 1fr) !important;
+            }
+          }
+
+          @media (prefers-reduced-motion: reduce) {
+            .analytics-theme *,
+            .analytics-theme *::before,
+            .analytics-theme *::after {
+              animation-duration: 0.01ms !important;
+              animation-iteration-count: 1 !important;
+              scroll-behavior: auto !important;
+              transition-duration: 0.01ms !important;
             }
           }
         `}</style>
@@ -688,6 +804,7 @@ function Analytics() {
           </div>
 
           <button
+            type="button"
             onClick={refresh}
             disabled={loading || detailsLoading}
             style={{
@@ -727,7 +844,7 @@ function Analytics() {
                 height: 43,
                 display: "grid",
                 placeItems: "center",
-                background: `${colors.purple}20`,
+                background: `color-mix(in srgb, ${colors.purple} 12%, transparent)`,
                 color: colors.purple,
                 borderRadius: 13,
               }}
@@ -744,6 +861,7 @@ function Analytics() {
           </div>
 
           <select
+            aria-label="Select analytics project"
             value={selectedProject}
             onChange={(event) => {
               setTasks([]);
@@ -778,9 +896,11 @@ function Analytics() {
         </div>
 
         {loading ? (
-          <div style={panel}>Loading your projects...</div>
+          <div style={panel} role="status" aria-live="polite">
+            Loading your projects...
+          </div>
         ) : error && projects.length === 0 ? (
-          <div style={panel}>
+          <div style={panel} role="alert">
             <AlertCircle color={colors.red} />
             <p style={{ marginTop: 10 }}>{error}</p>
             <button
@@ -803,17 +923,20 @@ function Analytics() {
         ) : (
           <>
             {error && (
-              <p style={{ color: colors.red, marginBottom: 15 }}>{error}</p>
+              <p style={{ color: colors.red, marginBottom: 15 }} role="alert">
+                {error}
+              </p>
             )}
 
             {/* Hero project card */}
             <div
+              className="analytics-project-hero"
               style={{
                 ...panel,
                 marginBottom: 22,
-                padding: 25,
+                  padding: 25,
                 background:
-                  "linear-gradient(115deg, #25234d 0%, #4841a2 58%, #7567f8 100%)",
+                    "radial-gradient(circle at 88% 0%, rgba(246, 200, 213, 0.24), transparent 34%), linear-gradient(115deg, #142b4a 0%, #1d3d64 72%, #426184 100%)",
                 color: "white",
                 border: "none",
                 position: "relative",
@@ -834,7 +957,7 @@ function Analytics() {
                     style={{
                       fontSize: 10,
                       letterSpacing: 2,
-                      color: "#d6d2ff",
+                      color: "#f6c8d5",
                       fontWeight: 750,
                     }}
                   >
@@ -852,19 +975,51 @@ function Analytics() {
 
                 <div
                   style={{
+                    position: "relative",
                     width: 112,
                     height: 112,
                     borderRadius: "50%",
-                    border: "7px solid rgba(255,255,255,.2)",
-                    borderTopColor: "#ffffff",
                     display: "flex",
                     flexDirection: "column",
                     justifyContent: "center",
                     alignItems: "center",
                   }}
                 >
+                  <svg
+                    width="112"
+                    height="112"
+                    viewBox="0 0 112 112"
+                    aria-hidden="true"
+                    style={{ position: "absolute", inset: 0 }}
+                  >
+                    <circle
+                      cx="56"
+                      cy="56"
+                      r="52.5"
+                      fill="none"
+                      stroke="rgba(255,255,255,.2)"
+                      strokeWidth="7"
+                    />
+                    <circle
+                      cx="56"
+                      cy="56"
+                      r="52.5"
+                      fill="none"
+                      stroke="#ffffff"
+                      strokeWidth="7"
+                      strokeLinecap="butt"
+                      strokeDasharray={`${completionRingCircumference} ${completionRingCircumference}`}
+                      strokeDashoffset={
+                        completionRingCircumference *
+                        (1 - completionProgress / 100)
+                      }
+                      transform="rotate(-90 56 56)"
+                      style={{ transition: "stroke-dashoffset 300ms ease" }}
+                    />
+                  </svg>
+
                   <strong style={{ fontSize: 27 }}>
-                    {analytics.progress}%
+                    {completionProgress}%
                   </strong>
 
                   <span style={{ fontSize: 10, color: "#e2e0ff" }}>
@@ -888,7 +1043,7 @@ function Analytics() {
                     height: "100%",
                     background: "#ffffff",
                     borderRadius: 20,
-                    transition: "width .4s ease",
+                    transition: "width 300ms ease",
                   }}
                 />
               </div>
@@ -906,6 +1061,7 @@ function Analytics() {
 
             {/* KPI Cards */}
             <div
+              className="analytics-kpi-grid"
               style={{
                 display: "grid",
                 gridTemplateColumns: "repeat(auto-fit, minmax(175px, 1fr))",
@@ -957,6 +1113,7 @@ function Analytics() {
 
             {/* Task distribution and Project health */}
             <div
+              className="analytics-overview-grid"
               style={{
                 display: "grid",
                 gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
@@ -1110,6 +1267,7 @@ function Analytics() {
 
             {/* Team workload and Schedule */}
             <div
+              className="analytics-detail-grid"
               style={{
                 display: "grid",
                 gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
@@ -1167,6 +1325,7 @@ function Analytics() {
                         gridTemplateColumns: "1fr 1fr",
                         gap: 12,
                       }}
+                      className="analytics-schedule-metrics"
                     >
                       <div
                         className="analytics-surface"
@@ -1257,7 +1416,10 @@ function Analytics() {
             </div>
 
             {/* RISK ANALYSIS */}
-            <div style={{ ...panel, marginBottom: 22 }}>
+            <div
+              className="analytics-risk-panel"
+              style={{ ...panel, marginBottom: 22 }}
+            >
               <SectionTitle
                 icon={AlertTriangle}
                 title="Risk Analysis"
@@ -1414,6 +1576,7 @@ function Analytics() {
 
                         return (
                           <div
+                            className={`analytics-risk-item analytics-risk-${level}`}
                             key={risk.taskId || risk.id || index}
                             style={{
                               padding: 16,
@@ -1492,7 +1655,7 @@ function Analytics() {
             </div>
 
             {/* SMART INSIGHTS */}
-            <div style={panel}>
+            <div className="analytics-insights-panel" style={panel}>
               <SectionTitle
                 icon={Zap}
                 title="Smart project insights"
@@ -1525,7 +1688,7 @@ function Analytics() {
                             display: "grid",
                             placeItems: "center",
                             color: colors.purple,
-                            background: `${colors.purple}20`,
+                            background: `color-mix(in srgb, ${colors.purple} 12%, transparent)`,
                             flexShrink: 0,
                           }}
                         >

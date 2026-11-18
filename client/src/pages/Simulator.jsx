@@ -163,36 +163,303 @@ function Simulator() {
       activeTab="simulator"
       setActiveTab={() => {}}
     >
-      <div className="page-shell">
+      <div className="page-shell phase3-page simulator-page">
+        <style>{`
+          .simulator-page {
+            --sim-panel: var(--panel);
+            --sim-surface: var(--surface-muted);
+            --sim-border: var(--line);
+            --sim-text: var(--text);
+            --sim-muted: var(--text-soft);
+            max-width: 1440px;
+            margin-inline: auto;
+          }
+
+          .simulator-hero {
+            position: relative;
+            overflow: hidden;
+            padding: clamp(22px, 4vw, 36px);
+            border: 1px solid rgba(220, 229, 240, 0.18);
+            border-radius: var(--radius-xl);
+            background:
+              radial-gradient(circle at 88% 0%, rgba(246, 200, 213, 0.28), transparent 33%),
+              linear-gradient(120deg, #142b4a, #1d3d64);
+            color: #f8f7fa;
+            box-shadow: var(--shadow);
+          }
+
+          .simulator-hero .eyebrow {
+            color: #f6c8d5;
+          }
+
+          .simulator-hero h1 {
+            margin-top: 9px;
+            font-size: clamp(1.9rem, 3.5vw, 2.6rem);
+            letter-spacing: -0.045em;
+          }
+
+          .simulator-hero .subtitle {
+            max-width: 680px;
+            margin-top: 10px;
+            color: rgba(248, 247, 250, 0.78);
+            line-height: 1.65;
+          }
+
+          .simulator-page > .glass-panel {
+            border: 1px solid var(--sim-border);
+            border-radius: var(--radius-xl);
+            background: var(--sim-panel);
+            color: var(--sim-text);
+            box-shadow: var(--card-shadow);
+          }
+
+          .simulator-page .form-group label {
+            color: var(--sim-text);
+            font-weight: 700;
+          }
+
+          .simulator-page .form-group select,
+          .simulator-page .form-group input {
+            min-height: 46px;
+            border: 1px solid var(--input-border);
+            border-radius: var(--radius-md);
+            background: var(--input-bg);
+            color: var(--sim-text);
+          }
+
+          .simulator-page .form-group select:focus-visible,
+          .simulator-page .form-group input:focus-visible {
+            border-color: var(--focus);
+            outline: 3px solid color-mix(in srgb, var(--focus) 25%, transparent);
+            outline-offset: 1px;
+          }
+
+          .simulator-alert,
+          .simulator-success {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-top: 20px;
+            padding: 14px 16px;
+            border: 1px solid transparent;
+            border-radius: var(--radius-md);
+            line-height: 1.5;
+          }
+
+          .simulator-alert {
+            border-color: rgba(180, 35, 64, 0.24);
+            background: rgba(180, 35, 64, 0.1);
+            color: #a51d39;
+          }
+
+          .simulator-success {
+            border-color: rgba(16, 130, 89, 0.24);
+            background: rgba(16, 130, 89, 0.1);
+            color: #08744d;
+          }
+
+          :root[data-theme="dark"] .simulator-alert {
+            color: #ff9aab;
+          }
+
+          :root[data-theme="dark"] .simulator-success {
+            color: #73ddb0;
+          }
+
+          .simulator-alert svg,
+          .simulator-success svg {
+            flex-shrink: 0;
+            margin-top: 2px;
+          }
+
+          .simulator-selected-task {
+            margin-top: 18px;
+            padding: 16px;
+            border: 1px solid var(--sim-border);
+            border-radius: var(--radius-md);
+            background: var(--sim-surface);
+            color: var(--sim-text);
+          }
+
+          .simulator-selected-task p {
+            margin-top: 5px;
+            color: var(--sim-muted);
+            font-size: 0.875rem;
+          }
+
+          .simulator-result-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            gap: 14px;
+            margin-top: 22px;
+          }
+
+          .simulator-result-card {
+            min-width: 0;
+            padding: 18px;
+            border: 1px solid var(--sim-border);
+            border-radius: var(--radius-lg);
+            background: var(--sim-surface);
+            color: var(--sim-text);
+            transition: transform 240ms ease, box-shadow 240ms ease,
+              border-color 240ms ease;
+          }
+
+          .simulator-result-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--color-blue);
+            box-shadow: var(--card-shadow);
+          }
+
+          .simulator-result-card[data-tone="accent"] {
+            background: color-mix(in srgb, var(--color-blue) 38%, var(--sim-panel));
+          }
+
+          .simulator-result-card[data-tone="highlight"] {
+            background: color-mix(in srgb, var(--color-pink) 35%, var(--sim-panel));
+          }
+
+          :root[data-theme="dark"] .simulator-result-card[data-tone="accent"] {
+            background: #1c3855;
+          }
+
+          :root[data-theme="dark"] .simulator-result-card[data-tone="highlight"] {
+            background: #3a2938;
+          }
+
+          .simulator-result-card p {
+            margin-top: 10px;
+            color: var(--sim-muted);
+            font-size: 0.8rem;
+          }
+
+          .simulator-result-card h3 {
+            margin-top: 5px;
+            font-size: 1.55rem;
+            letter-spacing: -0.035em;
+          }
+
+          .simulator-table-wrap {
+            overflow-x: auto;
+            margin-top: 16px;
+            border: 1px solid var(--sim-border);
+            border-radius: var(--radius-md);
+          }
+
+          .simulator-results-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 650px;
+            color: var(--sim-text);
+          }
+
+          .simulator-results-table th,
+          .simulator-results-table td {
+            padding: 12px;
+            border-bottom: 1px solid var(--sim-border);
+            text-align: left;
+            white-space: nowrap;
+          }
+
+          .simulator-results-table th {
+            background: var(--sim-surface);
+            color: var(--sim-muted);
+            font-size: 0.75rem;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+          }
+
+          .simulator-results-table tbody tr:last-child td {
+            border-bottom: 0;
+          }
+
+          .simulator-critical-path {
+            margin-top: 24px;
+            padding: 18px;
+            border: 1px solid rgba(180, 35, 64, 0.2);
+            border-radius: var(--radius-lg);
+            background: color-mix(in srgb, var(--color-pink) 24%, var(--sim-panel));
+            color: var(--sim-text);
+          }
+
+          :root[data-theme="dark"] .simulator-critical-path {
+            border-color: rgba(246, 200, 213, 0.24);
+            background: #322534;
+          }
+
+          .simulator-critical-path h3 {
+            color: #a51d39;
+          }
+
+          :root[data-theme="dark"] .simulator-critical-path h3 {
+            color: #ff9aab;
+          }
+
+          .simulator-critical-path p {
+            margin-top: 5px;
+            color: var(--sim-muted);
+            font-size: 0.825rem;
+          }
+
+          .simulator-critical-chip {
+            display: inline-flex;
+            margin-top: 14px;
+            padding: 8px 12px;
+            border: 1px solid rgba(180, 35, 64, 0.18);
+            border-radius: var(--radius-pill);
+            background: rgba(180, 35, 64, 0.1);
+            color: #a51d39;
+            font-size: 0.8rem;
+            font-weight: 700;
+          }
+
+          :root[data-theme="dark"] .simulator-critical-chip {
+            color: #ffb0bd;
+          }
+
+          @media (max-width: 560px) {
+            .simulator-page > .glass-panel {
+              padding: 18px !important;
+            }
+
+            .simulator-result-grid {
+              grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .simulator-result-card {
+              padding: 14px;
+            }
+
+            .simulator-result-card h3 {
+              font-size: 1.25rem;
+            }
+          }
+
+          @media (prefers-reduced-motion: reduce) {
+            .simulator-page *,
+            .simulator-page *::before,
+            .simulator-page *::after {
+              animation-duration: 0.01ms !important;
+              animation-iteration-count: 1 !important;
+              scroll-behavior: auto !important;
+              transition-duration: 0.01ms !important;
+            }
+          }
+        `}</style>
 
         {/* PAGE HEADER */}
-        <div className="glass-panel" style={{ padding: 28 }}>
+        <header className="simulator-hero">
           <p className="eyebrow">PROJECT PLANNING</p>
-
-          <h1 style={{ marginTop: 8, fontSize: "2.2rem" }}>
-            What-If Simulator
-          </h1>
-
-          <p className="subtitle" style={{ marginTop: 8 }}>
+          <h1>What-If Simulator</h1>
+          <p className="subtitle">
             Test different task durations and understand
             how they affect your project's schedule and critical path.
           </p>
-        </div>
+        </header>
 
         {/* ERROR MESSAGE */}
         {error && (
-          <div
-            style={{
-              marginTop: 20,
-              padding: 14,
-              borderRadius: 10,
-              background: "#fef2f2",
-              color: "#b91c1c",
-              display: "flex",
-              gap: 10,
-              alignItems: "center",
-            }}
-          >
+          <div className="simulator-alert" role="alert">
             <AlertCircle size={19} />
             {error}
           </div>
@@ -200,18 +467,7 @@ function Simulator() {
 
         {/* SUCCESS MESSAGE */}
         {success && (
-          <div
-            style={{
-              marginTop: 20,
-              padding: 14,
-              borderRadius: 10,
-              background: "#ecfdf5",
-              color: "#047857",
-              display: "flex",
-              gap: 10,
-              alignItems: "center",
-            }}
-          >
+          <div className="simulator-success" role="status" aria-live="polite">
             <CheckCircle size={19} />
             {success}
           </div>
@@ -241,9 +497,10 @@ function Simulator() {
             >
               {/* PROJECT SELECT */}
               <div className="form-group">
-                <label>Choose Project</label>
+                <label htmlFor="simulation-project">Choose Project</label>
 
                 <select
+                  id="simulation-project"
                   value={projectId}
                   onChange={(e) => {
                     setProjectId(e.target.value);
@@ -271,9 +528,10 @@ function Simulator() {
 
               {/* TASK SELECT */}
               <div className="form-group">
-                <label>Choose Task</label>
+                <label htmlFor="simulation-task">Choose Task</label>
 
                 <select
+                  id="simulation-task"
                   value={taskId}
                   onChange={(e) => {
                     setTaskId(e.target.value);
@@ -306,9 +564,10 @@ function Simulator() {
 
               {/* SIMULATED DURATION */}
               <div className="form-group">
-                <label>New Duration (days)</label>
+                <label htmlFor="simulation-duration">New Duration (days)</label>
 
                 <input
+                  id="simulation-duration"
                   type="number"
                   min="1"
                   step="1"
@@ -327,15 +586,7 @@ function Simulator() {
 
             {/* SELECTED TASK INFORMATION */}
             {selectedTask && (
-              <div
-                style={{
-                  marginTop: 18,
-                  padding: 16,
-                  borderRadius: 10,
-                  background: "#eff6ff",
-                  color: "#1e40af",
-                }}
-              >
+              <div className="simulator-selected-task">
                 <strong>{selectedTask.title}</strong>
 
                 <p style={{ fontSize: 14, marginTop: 5 }}>
@@ -402,21 +653,8 @@ function Simulator() {
             </div>
 
             {/* RESULT CARDS */}
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-                gap: 14,
-                marginTop: 22,
-              }}
-            >
-              <div
-                style={{
-                  padding: 18,
-                  borderRadius: 12,
-                  background: "#f1f5f9",
-                }}
-              >
+            <div className="simulator-result-grid">
+              <div className="simulator-result-card">
                 <Clock size={21} />
                 <p style={{ fontSize: 13, marginTop: 10 }}>
                   Original Task Duration
@@ -426,14 +664,7 @@ function Simulator() {
                 </h3>
               </div>
 
-              <div
-                style={{
-                  padding: 18,
-                  borderRadius: 12,
-                  background: "#eff6ff",
-                  color: "#1d4ed8",
-                }}
-              >
+              <div className="simulator-result-card" data-tone="accent">
                 <Activity size={21} />
                 <p style={{ fontSize: 13, marginTop: 10 }}>
                   Simulated Task Duration
@@ -443,14 +674,7 @@ function Simulator() {
                 </h3>
               </div>
 
-              <div
-                style={{
-                  padding: 18,
-                  borderRadius: 12,
-                  background: "#ecfdf5",
-                  color: "#047857",
-                }}
-              >
+              <div className="simulator-result-card">
                 <TrendingUp size={21} />
                 <p style={{ fontSize: 13, marginTop: 10 }}>
                   New Project Duration
@@ -460,14 +684,7 @@ function Simulator() {
                 </h3>
               </div>
 
-              <div
-                style={{
-                  padding: 18,
-                  borderRadius: 12,
-                  background: "#f5f3ff",
-                  color: "#6d28d9",
-                }}
-              >
+              <div className="simulator-result-card" data-tone="highlight">
                 <TrendingDown size={21} />
                 <p style={{ fontSize: 13, marginTop: 10 }}>
                   Critical Tasks
@@ -488,13 +705,9 @@ function Simulator() {
                 Early and late scheduling calculations for every task.
               </p>
 
-              <div style={{ overflowX: "auto", marginTop: 16 }}>
+              <div className="simulator-table-wrap">
                 <table
-                  style={{
-                    width: "100%",
-                    borderCollapse: "collapse",
-                    minWidth: 650,
-                  }}
+                  className="simulator-results-table"
                 >
                   <thead>
                     <tr>
@@ -508,15 +721,7 @@ function Simulator() {
                         "Slack",
                         "Critical",
                       ].map((heading) => (
-                        <th
-                          key={heading}
-                          style={{
-                            textAlign: "left",
-                            padding: 12,
-                            borderBottom: "1px solid #e2e8f0",
-                            fontSize: 13,
-                          }}
-                        >
+                        <th key={heading}>
                           {heading}
                         </th>
                       ))}
@@ -526,21 +731,21 @@ function Simulator() {
                   <tbody>
                     {result.tasks.map((task) => (
                       <tr key={task.taskId}>
-                        <td style={{ padding: 12 }}>
+                        <td>
                           {task.title}
                         </td>
 
-                        <td style={{ padding: 12 }}>
+                        <td>
                           {task.duration} days
                         </td>
 
-                        <td style={{ padding: 12 }}>{task.ES}</td>
-                        <td style={{ padding: 12 }}>{task.EF}</td>
-                        <td style={{ padding: 12 }}>{task.LS}</td>
-                        <td style={{ padding: 12 }}>{task.LF}</td>
-                        <td style={{ padding: 12 }}>{task.slack}</td>
+                        <td>{task.ES}</td>
+                        <td>{task.EF}</td>
+                        <td>{task.LS}</td>
+                        <td>{task.LF}</td>
+                        <td>{task.slack}</td>
 
-                        <td style={{ padding: 12 }}>
+                        <td>
                           {task.isCritical ? (
                             <span
                               style={{
@@ -564,32 +769,9 @@ function Simulator() {
             </div>
 
             {/* CRITICAL PATH */}
-            <div
-              style={{
-                marginTop: 24,
-                padding: 18,
-                background: "#fff7ed",
-                border: "1px solid #fed7aa",
-                borderRadius: 12,
-              }}
-            >
-              <h3
-                style={{
-                  fontWeight: 700,
-                  color: "#9a3412",
-                  fontSize: 17,
-                }}
-              >
-                Critical Path
-              </h3>
-
-              <p
-                style={{
-                  fontSize: 13,
-                  color: "#9a3412",
-                  marginTop: 5,
-                }}
-              >
+            <div className="simulator-critical-path">
+              <h3>Critical Path</h3>
+              <p>
                 Tasks with zero slack time.
               </p>
 
@@ -607,17 +789,7 @@ function Simulator() {
                   }}
                 >
                   {result.criticalPath.map((task) => (
-                    <span
-                      key={task.taskId}
-                      style={{
-                        background: "#ffedd5",
-                        color: "#9a3412",
-                        padding: "9px 13px",
-                        borderRadius: 8,
-                        fontSize: 13,
-                        fontWeight: 600,
-                      }}
-                    >
+                    <span key={task.taskId} className="simulator-critical-chip">
                       {task.title}
                     </span>
                   ))}

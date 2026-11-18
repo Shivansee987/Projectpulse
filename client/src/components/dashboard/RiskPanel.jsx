@@ -42,9 +42,101 @@ function RiskPanel({ projectId }) {
 
   return (
     <section
-      className="glass-panel"
+      className="glass-panel phase3-risk-panel"
       style={{ padding: 24, marginTop: 20 }}
     >
+      <style>{`
+        .phase3-risk-panel {
+          --risk-border: var(--line);
+          --risk-surface: var(--surface-muted);
+          --risk-text: var(--text);
+          --risk-muted: var(--text-soft);
+          overflow: hidden;
+          border: 1px solid var(--risk-border);
+          border-radius: var(--radius-xl);
+          background: var(--panel);
+          color: var(--risk-text);
+          box-shadow: var(--card-shadow);
+          transition: border-color 240ms ease, box-shadow 240ms ease;
+        }
+
+        .phase3-risk-panel .eyebrow {
+          color: var(--color-navy);
+        }
+
+        :root[data-theme="dark"] .phase3-risk-panel .eyebrow {
+          color: var(--color-pink);
+        }
+
+        .phase3-risk-panel .subtitle,
+        .phase3-risk-panel th {
+          color: var(--risk-muted);
+        }
+
+        .phase3-risk-panel .glass-panel {
+          border: 1px solid var(--risk-border);
+          border-radius: var(--radius-md);
+          background: var(--risk-surface);
+          box-shadow: none;
+        }
+
+        .phase3-risk-panel button {
+          min-height: 42px;
+          transition: transform 220ms ease, box-shadow 220ms ease;
+        }
+
+        .phase3-risk-panel button:hover:not(:disabled) {
+          transform: translateY(-1px);
+          box-shadow: var(--card-shadow);
+        }
+
+        .phase3-risk-panel button:focus-visible {
+          outline: 3px solid var(--focus);
+          outline-offset: 3px;
+        }
+
+        .phase3-risk-panel table {
+          border-collapse: separate !important;
+          border-spacing: 0;
+          color: var(--risk-text);
+        }
+
+        .phase3-risk-panel th {
+          background: var(--risk-surface);
+          font-size: 0.73rem;
+          letter-spacing: 0.04em;
+          text-transform: uppercase;
+        }
+
+        .phase3-risk-panel td,
+        .phase3-risk-panel th {
+          border-bottom: 1px solid var(--risk-border) !important;
+        }
+
+        .phase3-risk-panel tbody tr:last-child td {
+          border-bottom: 0 !important;
+        }
+
+        @media (max-width: 560px) {
+          .phase3-risk-panel {
+            padding: 18px !important;
+          }
+
+          .phase3-risk-panel table {
+            min-width: 560px;
+          }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .phase3-risk-panel *,
+          .phase3-risk-panel *::before,
+          .phase3-risk-panel *::after {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+          }
+        }
+      `}</style>
       <div
         style={{
           display: "flex",
@@ -74,11 +166,13 @@ function RiskPanel({ projectId }) {
       </div>
 
       {loading && !riskData && (
-        <p style={{ marginTop: 24 }}>Analyzing project risks...</p>
+        <p style={{ marginTop: 24 }} role="status" aria-live="polite">
+          Analyzing project risks...
+        </p>
       )}
 
       {error && (
-        <p style={{ color: "#dc2626", marginTop: 20 }}>
+        <p style={{ color: "#dc2626", marginTop: 20 }} role="alert">
           <AlertTriangle size={16} style={{ verticalAlign: "middle" }} />
           {" "}{error}
         </p>

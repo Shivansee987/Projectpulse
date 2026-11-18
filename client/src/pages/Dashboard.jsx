@@ -56,12 +56,15 @@ function Dashboard() {
 
         const response = await api.get("/projects");
         const list = response.data.projects || response.data;
+        const savedProjectId = localStorage.getItem("activeProjectId");
 
         setProjects(list);
 
         if (list.length > 0) {
           setActiveProject((current) =>
-            list.find((project) => project.id === current?.id) || list[0]
+            list.find((project) => project.id === current?.id) ||
+            list.find((project) => project.id === savedProjectId) ||
+            list[0]
           );
         } else {
           setActiveProject(null);
@@ -78,6 +81,48 @@ function Dashboard() {
 
     loadProjects();
   }, [projectRefreshKey]);
+
+  useEffect(() => {
+    function syncActiveProject(event) {
+      const projectId = event.detail?.projectId;
+
+      if (!projectId) {
+        setActiveProject(null);
+        return;
+      }
+
+      const selected = projects.find((project) => project.id === projectId);
+      if (selected) setActiveProject(selected);
+    }
+
+    window.addEventListener(
+      "projectpulse:active-project-change",
+      syncActiveProject
+    );
+
+    return () =>
+      window.removeEventListener(
+        "projectpulse:active-project-change",
+        syncActiveProject
+      );
+  }, [projects]);
+
+  useEffect(() => {
+    if (activeProject?.id) {
+      localStorage.setItem("activeProjectId", activeProject.id);
+    } else if (!loading) {
+      localStorage.removeItem("activeProjectId");
+    }
+
+    window.dispatchEvent(
+      new CustomEvent("projectpulse:active-project-change", {
+        detail: {
+          projectId: activeProject?.id || "",
+          project: activeProject,
+        },
+      })
+    );
+  }, [activeProject, loading]);
 
   useEffect(() => {
     if (!activeProject?.id) return;
@@ -236,7 +281,6 @@ function Dashboard() {
   const layoutProps = {
     activeTab: "overview",
     setActiveTab: () => {},
-    onProjectModalOpen: openCreateProject,
     onSearch: setSearchQuery,
   };
 

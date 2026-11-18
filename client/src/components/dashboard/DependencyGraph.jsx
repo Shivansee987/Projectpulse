@@ -758,6 +758,234 @@ function DependencyGraph({ tasks = [] }) {
             height: 450px;
           }
         }
+
+        .dependency-workspace {
+          --dep-panel: var(--panel);
+          --dep-surface: var(--surface-muted);
+          --dep-border: var(--line);
+          --dep-text: var(--text);
+          --dep-muted: var(--text-soft);
+          margin-top: var(--space-5);
+          padding: clamp(18px, 3vw, 30px);
+          border-color: var(--dep-border);
+          border-radius: var(--radius-xl);
+          background: var(--dep-panel);
+          color: var(--dep-text);
+          box-shadow: var(--card-shadow);
+          transition: background-color 240ms ease, border-color 240ms ease;
+        }
+
+        :root[data-theme] .dependency-workspace {
+          --dep-panel: var(--panel);
+          --dep-surface: var(--surface-muted);
+          --dep-border: var(--line);
+          --dep-text: var(--text);
+          --dep-muted: var(--text-soft);
+        }
+
+        .dependency-heading {
+          align-items: flex-start;
+        }
+
+        .dependency-heading-icon {
+          flex-shrink: 0;
+          background: var(--color-pink);
+          color: var(--color-navy);
+        }
+
+        .dependency-heading h2,
+        .dependency-section-title,
+        .dependency-analysis h3 {
+          letter-spacing: -0.02em;
+        }
+
+        .dependency-form {
+          background: var(--dep-surface);
+          border-color: var(--dep-border);
+          border-radius: var(--radius-lg);
+        }
+
+        .dependency-form select {
+          min-height: 46px;
+          border-color: var(--input-border);
+          background: var(--input-bg);
+          color: var(--dep-text);
+          transition: border-color 200ms ease, box-shadow 200ms ease;
+        }
+
+        .dependency-form select:focus-visible {
+          border-color: var(--focus);
+          outline: 3px solid color-mix(in srgb, var(--focus) 25%, transparent);
+          outline-offset: 1px;
+          box-shadow: none;
+        }
+
+        .dependency-add-button {
+          min-height: 46px;
+          border: 1px solid var(--color-navy);
+          border-radius: var(--radius-md);
+          background: var(--color-navy);
+          color: var(--color-white);
+          transition: transform 220ms ease, box-shadow 220ms ease,
+            background-color 220ms ease;
+        }
+
+        .dependency-add-button:hover:not(:disabled) {
+          transform: translateY(-1px);
+          box-shadow: var(--card-shadow);
+          background: #1d3d64;
+        }
+
+        .dependency-add-button:focus-visible,
+        .dependency-delete:focus-visible {
+          outline: 3px solid var(--focus);
+          outline-offset: 3px;
+        }
+
+        .dependency-message {
+          display: flex;
+          align-items: flex-start;
+          gap: 8px;
+          line-height: 1.5;
+        }
+
+        .dependency-message svg {
+          flex-shrink: 0;
+          margin-top: 1px;
+        }
+
+        .dependency-section-title {
+          color: var(--dep-text);
+        }
+
+        .dependency-legend,
+        .dependency-connection,
+        .dependency-analysis {
+          background: var(--dep-surface);
+          border-color: var(--dep-border);
+        }
+
+        .dependency-connection {
+          transition: border-color 220ms ease, transform 220ms ease,
+            box-shadow 220ms ease;
+        }
+
+        .dependency-connection:hover {
+          transform: translateY(-1px);
+          border-color: color-mix(in srgb, var(--color-navy) 45%, var(--dep-border));
+          box-shadow: var(--card-shadow);
+        }
+
+        .dependency-task-chip {
+          overflow-wrap: anywhere;
+          border-color: var(--dep-border);
+          background: var(--dep-panel);
+          color: var(--dep-text);
+        }
+
+        .dependency-delete {
+          min-height: 38px;
+          transition: background-color 200ms ease, border-color 200ms ease;
+        }
+
+        .dependency-delete:hover {
+          background: rgba(180, 35, 64, 0.18);
+          border-color: rgba(180, 35, 64, 0.4);
+        }
+
+        .dependency-analysis {
+          border-radius: var(--radius-lg);
+        }
+
+        .dependency-graph {
+          height: clamp(390px, 55vh, 620px);
+          border-color: var(--dep-border);
+          border-radius: var(--radius-lg);
+          background: var(--dep-surface);
+        }
+
+        .dependency-graph .react-flow__controls-button,
+        .dependency-graph .react-flow__minimap {
+          color: var(--dep-text);
+          fill: var(--dep-text);
+          border-color: var(--dep-border);
+        }
+
+        .dependency-task-node {
+          border-color: var(--color-blue);
+          border-radius: var(--radius-md);
+          background: var(--dep-panel);
+          color: var(--dep-text);
+          box-shadow: var(--card-shadow);
+          transition: box-shadow 220ms ease, border-color 220ms ease;
+        }
+
+        .dependency-task-node.critical {
+          border-color: #b42340;
+          background: color-mix(in srgb, var(--color-pink) 45%, var(--dep-panel));
+          color: var(--dep-text);
+        }
+
+        :root[data-theme="dark"] .dependency-task-node.critical {
+          border-color: #ff8296;
+          background: #402634;
+          color: #fff3f5;
+        }
+
+        .dependency-node-status,
+        .dependency-node-meta span {
+          color: var(--dep-muted);
+        }
+
+        .dependency-node-cpm {
+          border-color: var(--dep-border);
+          color: var(--dep-text);
+        }
+
+        .dependency-graph .react-flow__edge.animated path {
+          animation-duration: 2.4s;
+        }
+
+        @media (max-width: 560px) {
+          .dependency-workspace {
+            padding: 16px;
+          }
+
+          .dependency-heading {
+            gap: 11px;
+          }
+
+          .dependency-connection {
+            align-items: stretch;
+          }
+
+          .dependency-connection-path {
+            width: 100%;
+          }
+
+          .dependency-delete {
+            justify-content: center;
+          }
+
+          .dependency-graph {
+            height: 410px;
+          }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .dependency-workspace *,
+          .dependency-workspace *::before,
+          .dependency-workspace *::after {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            scroll-behavior: auto !important;
+            transition-duration: 0.01ms !important;
+          }
+
+          .dependency-graph .react-flow__edge.animated path {
+            animation: none !important;
+          }
+        }
       `}</style>
 
       <div className="dependency-heading">
@@ -772,8 +1000,9 @@ function DependencyGraph({ tasks = [] }) {
 
       <form className="dependency-form" onSubmit={handleAddDependency}>
         <div>
-          <label>Task that depends</label>
+          <label htmlFor="dependency-target-task">Task that depends</label>
           <select
+            id="dependency-target-task"
             value={selectedTask}
             onChange={(event) => setSelectedTask(event.target.value)}
             required
@@ -788,8 +1017,11 @@ function DependencyGraph({ tasks = [] }) {
         </div>
 
         <div>
-          <label>Must be completed first</label>
+          <label htmlFor="dependency-prerequisite-task">
+            Must be completed first
+          </label>
           <select
+            id="dependency-prerequisite-task"
             value={selectedPrerequisite}
             onChange={(event) => setSelectedPrerequisite(event.target.value)}
             required
@@ -814,14 +1046,14 @@ function DependencyGraph({ tasks = [] }) {
       </form>
 
       {error && (
-        <div className="dependency-message error">
+        <div className="dependency-message error" role="alert">
           <AlertTriangle size={15} style={{ verticalAlign: "middle" }} />{" "}
           {error}
         </div>
       )}
 
       {success && (
-        <div className="dependency-message success">
+        <div className="dependency-message success" role="status" aria-live="polite">
           <CheckCircle2 size={15} style={{ verticalAlign: "middle" }} />{" "}
           {success}
         </div>
@@ -847,7 +1079,9 @@ function DependencyGraph({ tasks = [] }) {
         </div>
 
         {loading ? (
-          <p style={{ color: "var(--dep-muted)" }}>Loading dependencies...</p>
+          <p style={{ color: "var(--dep-muted)" }} role="status" aria-live="polite">
+            Loading dependencies...
+          </p>
         ) : dependencies.length === 0 ? (
           <p style={{ color: "var(--dep-muted)", fontSize: 13 }}>
             No dependencies created yet. Add your first connection above.
@@ -877,6 +1111,7 @@ function DependencyGraph({ tasks = [] }) {
                 <button
                   type="button"
                   className="dependency-delete"
+                  aria-label={`Delete dependency from ${prerequisiteTask?.title || "task"} to ${dependentTask?.title || "task"}`}
                   onClick={() => handleDeleteDependency(dependency.id)}
                 >
                   <Trash2 size={14} />
@@ -922,7 +1157,11 @@ function DependencyGraph({ tasks = [] }) {
               Visual Dependency Map
             </div>
 
-            <div className="dependency-graph">
+            <div
+              className="dependency-graph"
+              role="region"
+              aria-label="Interactive task dependency graph"
+            >
               <ReactFlow
                 nodes={nodes}
                 edges={edges}

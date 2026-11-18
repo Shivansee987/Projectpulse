@@ -52,7 +52,7 @@ function ProjectReport({
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
 
-    doc.setFillColor(20, 30, 55);
+    doc.setFillColor(20, 43, 74);
     doc.rect(0, 0, pageWidth, 38, "F");
 
     doc.setTextColor(255, 255, 255);
@@ -97,7 +97,7 @@ function ProjectReport({
         ["Project Duration", `${cpm?.projectDuration ?? "N/A"} days`],
       ],
       theme: "grid",
-      headStyles: { fillColor: [45, 65, 110] },
+      headStyles: { fillColor: [20, 43, 74] },
     });
 
     nextY = doc.lastAutoTable.finalY + 12;
@@ -119,7 +119,7 @@ function ProjectReport({
       ]),
       theme: "striped",
       styles: { fontSize: 8 },
-      headStyles: { fillColor: [45, 65, 110] },
+      headStyles: { fillColor: [20, 43, 74] },
     });
 
     nextY = doc.lastAutoTable.finalY + 12;
@@ -142,7 +142,7 @@ function ProjectReport({
         : [["No critical path data available", "-", "-"]],
       theme: "grid",
       styles: { fontSize: 8 },
-      headStyles: { fillColor: [45, 65, 110] },
+      headStyles: { fillColor: [20, 43, 74] },
     });
 
     nextY = doc.lastAutoTable.finalY + 12;
@@ -165,7 +165,7 @@ function ProjectReport({
         : [["No risk data available", "-", "-"]],
       theme: "grid",
       styles: { fontSize: 8 },
-      headStyles: { fillColor: [45, 65, 110] },
+      headStyles: { fillColor: [20, 43, 74] },
     });
 
     nextY = doc.lastAutoTable.finalY + 12;
@@ -194,7 +194,7 @@ function ProjectReport({
         : [["No simulation history available", "-", "-", "-"]],
       theme: "striped",
       styles: { fontSize: 8 },
-      headStyles: { fillColor: [45, 65, 110] },
+      headStyles: { fillColor: [20, 43, 74] },
     });
 
     doc.save(
@@ -662,6 +662,155 @@ function ProjectReport({
 
           .report-metrics {
             grid-template-columns: 1fr;
+          }
+        }
+
+        .project-report {
+          --report-border: var(--line);
+          --report-surface: var(--surface-muted);
+          --report-muted: var(--text-soft);
+          border-color: var(--report-border);
+          border-radius: var(--radius-xl);
+          background: var(--panel);
+          color: var(--text);
+          box-shadow: var(--card-shadow);
+          transition: background-color 240ms ease, border-color 240ms ease,
+            box-shadow 240ms ease;
+        }
+
+        :root[data-theme="dark"] .project-report {
+          border-color: var(--report-border);
+          background: var(--panel);
+          color: var(--text);
+        }
+
+        .report-icon {
+          border-radius: var(--radius-md);
+          background: var(--color-pink);
+          color: var(--color-navy);
+        }
+
+        .report-eyebrow,
+        .report-label {
+          color: var(--color-navy);
+        }
+
+        :root[data-theme="dark"] .report-eyebrow,
+        :root[data-theme="dark"] .report-label {
+          color: var(--color-pink);
+        }
+
+        .report-description,
+        .report-project-info p,
+        .report-dates,
+        .report-metric span,
+        .report-info-card span,
+        .report-progress > p {
+          color: var(--report-muted);
+        }
+
+        .report-download {
+          min-height: 44px;
+          border: 1px solid var(--color-navy);
+          border-radius: var(--radius-md);
+          background: var(--color-navy);
+          transition: transform 220ms ease, box-shadow 220ms ease,
+            background-color 220ms ease;
+        }
+
+        .report-download:hover:not(:disabled) {
+          background: #1d3d64;
+          box-shadow: var(--card-shadow);
+          transform: translateY(-1px);
+        }
+
+        .report-download:focus-visible {
+          outline: 3px solid var(--focus);
+          outline-offset: 3px;
+        }
+
+        .report-project-info,
+        .report-progress,
+        .report-metric,
+        .report-info-card {
+          border-color: var(--report-border);
+          border-radius: var(--radius-lg);
+          background: var(--report-surface);
+        }
+
+        :root[data-theme="dark"] .report-project-info,
+        :root[data-theme="dark"] .report-progress,
+        :root[data-theme="dark"] .report-metric,
+        :root[data-theme="dark"] .report-info-card {
+          border-color: var(--report-border);
+          background: var(--report-surface);
+        }
+
+        .report-metric,
+        .report-info-card {
+          transition: transform 240ms ease, box-shadow 240ms ease,
+            border-color 240ms ease;
+        }
+
+        .report-metric:hover,
+        .report-info-card:hover {
+          transform: translateY(-2px);
+          border-color: color-mix(in srgb, var(--color-navy) 42%, var(--report-border));
+          box-shadow: var(--card-shadow);
+        }
+
+        :root[data-theme="dark"] .report-metric:hover,
+        :root[data-theme="dark"] .report-info-card:hover {
+          border-color: var(--color-pink);
+        }
+
+        .report-blue .report-metric-icon,
+        .report-small-icon.blue {
+          color: var(--color-navy);
+          background: var(--color-blue);
+        }
+
+        .report-purple .report-metric-icon,
+        .report-small-icon.purple {
+          color: var(--color-navy);
+          background: var(--color-pink);
+        }
+
+        :root[data-theme="dark"] .report-blue .report-metric-icon,
+        :root[data-theme="dark"] .report-small-icon.blue {
+          color: var(--color-navy);
+        }
+
+        .report-progress-heading > strong {
+          color: var(--color-navy);
+        }
+
+        :root[data-theme="dark"] .report-progress-heading > strong {
+          color: var(--color-pink);
+        }
+
+        .report-progress-track {
+          background: var(--report-border);
+        }
+
+        .report-progress-fill {
+          background: linear-gradient(90deg, var(--color-navy), #426184, var(--color-pink));
+          transition: width 300ms ease;
+        }
+
+        @media (max-width: 760px) {
+          .report-project-info {
+            align-items: flex-start;
+          }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .project-report *,
+          .project-report *::before,
+          .project-report *::after {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
           }
         }
       `}</style>

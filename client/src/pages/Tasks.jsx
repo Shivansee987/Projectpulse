@@ -16,6 +16,8 @@ const emptyForm = {
   duration: 1,
   assignee: "",
   status: "Not Started",
+  dueDate: "",
+  priority: "Medium",
 };
 
 function Tasks() {
@@ -132,6 +134,8 @@ function Tasks() {
       duration: task.duration || 1,
       assignee: task.assignee || "",
       status: task.status || "Not Started",
+      dueDate: task.dueDate ? task.dueDate.slice(0, 10) : "",
+      priority: task.priority || "Medium",
     });
     setModalOpen(true);
   };
@@ -148,14 +152,19 @@ function Tasks() {
         duration: Number(form.duration),
         assignee: form.assignee.trim() || undefined,
         status: form.status,
+        dueDate: form.dueDate || null,
+        priority: form.priority,
       };
 
-      if (editingTask) {
-        await api.put(`/tasks/${editingTask.id}`, payload);
-      } else {
-        await api.post("/tasks", { ...payload, projectId });
-      }
+      const response = editingTask
+        ? await api.put(`/tasks/${editingTask.id}`, payload)
+        : await api.post("/tasks", { ...payload, projectId });
 
+      window.dispatchEvent(
+        new CustomEvent("projectpulse:tasks-updated", {
+          detail: { task: response.data.task },
+        })
+      );
       setModalOpen(false);
       setEditingTask(null);
       setForm(emptyForm);
@@ -173,6 +182,11 @@ function Tasks() {
     try {
       setError("");
       await api.delete(`/tasks/${task.id}`);
+      window.dispatchEvent(
+        new CustomEvent("projectpulse:tasks-updated", {
+          detail: { deletedTaskId: task.id },
+        })
+      );
       await loadTasks();
     } catch (err) {
       setError(err.response?.data?.message || "Could not delete task.");
@@ -183,6 +197,11 @@ function Tasks() {
     try {
       setError("");
       await api.put(`/tasks/${task.id}`, { status });
+      window.dispatchEvent(
+        new CustomEvent("projectpulse:tasks-updated", {
+          detail: { taskId: task.id, status },
+        })
+      );
       await loadTasks();
     } catch (err) {
       setError(err.response?.data?.message || "Could not update status.");
@@ -330,6 +349,8 @@ function Tasks() {
                     <th scope="col">Task</th>
                     <th scope="col">Assignee</th>
                     <th scope="col">Duration</th>
+                    <th scope="col">Due date</th>
+                    <th scope="col">Priority</th>
                     <th scope="col">Status</th>
                     <th scope="col" className="task-actions-heading">Actions</th>
                   </tr>
@@ -344,6 +365,16 @@ function Tasks() {
                         {task.assignee || "Unassigned"}
                       </td>
                       <td data-label="Duration">{task.duration} days</td>
+                      <td data-label="Due date">
+                        {task.dueDate
+                          ? new Date(`${task.dueDate.slice(0, 10)}T12:00:00`).toLocaleDateString()
+                          : "No due date"}
+                      </td>
+                      <td data-label="Priority">
+                        <span className={`task-priority task-priority-${(task.priority || "Medium").toLowerCase()}`}>
+                          {task.priority || "Medium"}
+                        </span>
+                      </td>
                       <td data-label="Status">
                         <select
                           className="task-status-select"
@@ -439,6 +470,37 @@ function Tasks() {
                     }
                     placeholder="Assignee name"
                   />
+                </div>
+
+                <div className="task-reminder-fields">
+                  <div className="form-group">
+                    <label htmlFor="task-due-date">Due date</label>
+                    <input
+                      id="task-due-date"
+                      type="date"
+                      value={form.dueDate}
+                      onChange={(e) =>
+                        setForm({ ...form, dueDate: e.target.value })
+                      }
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="task-priority">Priority</label>
+                    <select
+                      id="task-priority"
+                      value={form.priority}
+                      onChange={(e) =>
+                        setForm({ ...form, priority: e.target.value })
+                      }
+                    >
+                      {["Critical", "High", "Medium", "Low"].map((priority) => (
+                        <option key={priority} value={priority}>
+                          {priority}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
 
                 <div className="form-group">

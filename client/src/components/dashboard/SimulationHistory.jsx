@@ -315,6 +315,126 @@ function SimulationHistory({ projectId }) {
             justify-content: center;
           }
         }
+
+        .simulation-history {
+          --sh-bg: var(--panel);
+          --sh-card: var(--surface-muted);
+          --sh-border: var(--line);
+          --sh-text: var(--text);
+          --sh-muted: var(--text-soft);
+          --sh-blue-bg: var(--color-blue);
+          --sh-blue: var(--color-navy);
+          border-radius: var(--radius-xl);
+          border-color: var(--sh-border);
+          box-shadow: var(--card-shadow);
+          transition: background-color 240ms ease, border-color 240ms ease,
+            box-shadow 240ms ease;
+        }
+
+        :root[data-theme="dark"] .simulation-history {
+          --sh-bg: var(--panel);
+          --sh-card: var(--surface-muted);
+          --sh-border: var(--line);
+          --sh-text: var(--text);
+          --sh-muted: var(--text-soft);
+          --sh-blue-bg: #263d58;
+          --sh-blue: #f6c8d5;
+        }
+
+        .sh-heading h2 {
+          letter-spacing: -0.025em;
+        }
+
+        .sh-icon {
+          border-radius: var(--radius-md);
+          background: color-mix(in srgb, var(--color-pink) 65%, var(--sh-card));
+          color: var(--color-navy);
+        }
+
+        :root[data-theme="dark"] .sh-icon {
+          color: var(--color-pink);
+        }
+
+        .sh-refresh {
+          min-height: 42px;
+          border: 1px solid var(--color-navy);
+          border-radius: var(--radius-md);
+          background: var(--color-navy);
+          color: var(--color-white);
+          transition: transform 220ms ease, box-shadow 220ms ease;
+        }
+
+        .sh-refresh:hover:not(:disabled) {
+          transform: translateY(-1px);
+          box-shadow: var(--card-shadow);
+        }
+
+        .sh-refresh:focus-visible {
+          outline: 3px solid var(--focus);
+          outline-offset: 3px;
+        }
+
+        .sh-summary,
+        .sh-item,
+        .sh-metric,
+        .sh-state,
+        .sh-error {
+          border-radius: var(--radius-md);
+          border-color: var(--sh-border);
+        }
+
+        .sh-item {
+          transition: border-color 220ms ease, transform 220ms ease,
+            box-shadow 220ms ease;
+        }
+
+        .sh-item:hover {
+          border-color: var(--color-navy);
+          transform: translateY(-2px);
+          box-shadow: var(--card-shadow);
+        }
+
+        :root[data-theme="dark"] .sh-item:hover {
+          border-color: var(--color-pink);
+        }
+
+        .sh-positive {
+          background: rgba(180, 35, 64, 0.12);
+          color: #a51d39;
+        }
+
+        .sh-negative {
+          background: rgba(16, 130, 89, 0.14);
+          color: #08744d;
+        }
+
+        :root[data-theme="dark"] .sh-positive {
+          color: #ff9aab;
+        }
+
+        :root[data-theme="dark"] .sh-negative {
+          color: #73ddb0;
+        }
+
+        .sh-error {
+          background: rgba(180, 35, 64, 0.1);
+          border: 1px solid rgba(180, 35, 64, 0.24);
+          color: #a51d39;
+        }
+
+        :root[data-theme="dark"] .sh-error {
+          color: #ff9aab;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .simulation-history *,
+          .simulation-history *::before,
+          .simulation-history *::after {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+          }
+        }
       `}</style>
 
       <div className="sh-header">
@@ -332,6 +452,7 @@ function SimulationHistory({ projectId }) {
         </div>
 
         <button
+          type="button"
           onClick={() => setRefreshKey((current) => current + 1)}
           disabled={loading || !projectId}
           className="sh-refresh"
@@ -354,7 +475,7 @@ function SimulationHistory({ projectId }) {
       )}
 
       {!loading && error && (
-        <div className="sh-error">{error}</div>
+        <div className="sh-error" role="alert">{error}</div>
       )}
 
       {!loading && !error && projectId && history.length === 0 && (

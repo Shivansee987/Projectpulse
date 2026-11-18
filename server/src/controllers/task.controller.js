@@ -1,10 +1,42 @@
 
 const prisma = require("../config/prisma");
+const taskPriorities = new Set(["Critical", "High", "Medium", "Low"]);
+
+function parseDueDate(value) {
+  if (value === null || value === "") {
+    return { valid: true, date: null };
+  }
+
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return { valid: false };
+  }
+
+  const date = new Date(`${value}T00:00:00.000Z`);
+  if (
+    Number.isNaN(date.getTime()) ||
+    date.toISOString().slice(0, 10) !== value
+  ) {
+    return { valid: false };
+  }
+
+  return { valid: true, date };
+}
 
 // CREATE TASK
 exports.createTask = async (req, res) => {
   try {
-    const { title, duration, status, assignee, projectId } = req.body;
+    const {
+      title,
+      duration,
+      status,
+      assignee,
+      projectId,
+      dueDate,
+      priority = "Medium",
+    } = req.body;
+    const parsedDueDate = dueDate === undefined
+      ? { valid: true, date: null }
+      : parseDueDate(dueDate);
 
     if (
       typeof title !== "string" ||
@@ -17,6 +49,20 @@ exports.createTask = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "Valid title, positive duration and projectId are required",
+      });
+    }
+
+    if (!parsedDueDate.valid) {
+      return res.status(400).json({
+        success: false,
+        message: "Due date must be a valid YYYY-MM-DD date or null",
+      });
+    }
+
+    if (typeof priority !== "string" || !taskPriorities.has(priority)) {
+      return res.status(400).json({
+        success: false,
+        message: "Priority must be Critical, High, Medium or Low",
       });
     }
 
@@ -65,6 +111,8 @@ exports.createTask = async (req, res) => {
           typeof assignee === "string"
             ? assignee.trim() || null
             : null,
+        dueDate: parsedDueDate.date,
+        priority,
         projectId: project.id,
       },
     });
@@ -187,7 +235,7 @@ exports.getTaskById = async (req, res) => {
 exports.updateTask = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, duration, status, assignee } = req.body;
+    const { title, duration, status, assignee, dueDate, priority } = req.body;
 
     const existingTask = await prisma.task.findFirst({
       where: {
@@ -251,6 +299,27 @@ exports.updateTask = async (req, res) => {
         typeof assignee === "string"
           ? assignee.trim() || null
           : null;
+    }
+
+    if (dueDate !== undefined) {
+      const parsedDueDate = parseDueDate(dueDate);
+      if (!parsedDueDate.valid) {
+        return res.status(400).json({
+          success: false,
+          message: "Due date must be a valid YYYY-MM-DD date or null",
+        });
+      }
+      data.dueDate = parsedDueDate.date;
+    }
+
+    if (priority !== undefined) {
+      if (typeof priority !== "string" || !taskPriorities.has(priority)) {
+        return res.status(400).json({
+          success: false,
+          message: "Priority must be Critical, High, Medium or Low",
+        });
+      }
+      data.priority = priority;
     }
 
     if (Object.keys(data).length === 0) {
