@@ -250,9 +250,44 @@ exports.deleteProject = async (req, res) => {
       });
     }
 
-    await prisma.project.delete({
-      where: { id },
+    const projectTasks = await prisma.task.findMany({
+      where: { projectId: id },
+      select: { id: true },
     });
+    const taskIds = projectTasks.map((task) => task.id);
+
+    const operations = [];
+
+    if (taskIds.length > 0) {
+      operations.push(
+        prisma.dependency.deleteMany({
+          where: {
+            OR: [
+              { taskId: { in: taskIds } },
+              { dependsOnTaskId: { in: taskIds } },
+            ],
+          },
+        }),
+        prisma.simulation.deleteMany({
+          where: {
+            taskId: { in: taskIds },
+          },
+        }),
+        prisma.task.deleteMany({
+          where: {
+            projectId: id,
+          },
+        })
+      );
+    }
+
+    operations.push(
+      prisma.project.delete({
+        where: { id },
+      })
+    );
+
+    await prisma.$transaction(operations);
 
     return res.status(200).json({
       success: true,

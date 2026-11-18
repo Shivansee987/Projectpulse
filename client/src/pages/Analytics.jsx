@@ -1014,7 +1014,11 @@ function Analytics() {
                         (1 - completionProgress / 100)
                       }
                       transform="rotate(-90 56 56)"
-                      style={{ transition: "stroke-dashoffset 300ms ease" }}
+                      style={{
+                        opacity: completionProgress <= 0 ? 0 : 1,
+                        transition:
+                          "stroke-dashoffset 300ms ease, opacity 200ms ease",
+                      }}
                     />
                   </svg>
 
