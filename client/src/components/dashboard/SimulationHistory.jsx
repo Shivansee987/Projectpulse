@@ -11,36 +11,37 @@ function SimulationHistory({ projectId }) {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
-  const fetchHistory = async () => {
-    if (!projectId) {
-      setHistory([]);
-      return;
-    }
-
-    try {
-      setLoading(true);
-      setError("");
-
-      const response = await api.get(
-        `/simulations/project/${projectId}`
-      );
-
-      setHistory(response.data.history || []);
-    } catch (err) {
-      console.error("Simulation history error:", err);
-      setError(
-        err.response?.data?.message ||
-        "Could not load simulation history."
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
+    async function fetchHistory() {
+      if (!projectId) {
+        setHistory([]);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setError("");
+
+        const response = await api.get(
+          `/simulations/project/${projectId}`
+        );
+
+        setHistory(response.data.history || []);
+      } catch (err) {
+        console.error("Simulation history error:", err);
+        setError(
+          err.response?.data?.message ||
+          "Could not load simulation history."
+        );
+      } finally {
+        setLoading(false);
+      }
+    }
+
     fetchHistory();
-  }, [projectId]);
+  }, [projectId, refreshKey]);
 
   const formatDate = (date) => {
     return new Date(date).toLocaleString();
@@ -331,7 +332,7 @@ function SimulationHistory({ projectId }) {
         </div>
 
         <button
-          onClick={fetchHistory}
+          onClick={() => setRefreshKey((current) => current + 1)}
           disabled={loading || !projectId}
           className="sh-refresh"
         >

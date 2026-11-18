@@ -15,51 +15,54 @@ import Analytics from "./pages/Analytics";
 import Login from "./pages/Login";
 
 import ProtectedRoute from "./routes/ProtectedRoute";
+import { ThemeProvider } from "./components/layout/ThemeProvider";
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        {/* Login Page */}
-        <Route path="/login" element={<Login />} />
+    <ThemeProvider>
+      <BrowserRouter>
+        <Routes>
+          {/* Login Page */}
+          <Route path="/login" element={<Login />} />
 
-        {/* Protected Pages */}
-        <Route element={<ProtectedRoute />}>
-          <Route path="/" element={<Dashboard />} />
+          {/* Protected Pages */}
+          <Route element={<ProtectedRoute />}>
+            <Route path="/" element={<Dashboard />} />
 
+            <Route
+              path="/projects"
+              element={<Projects />}
+            />
+
+            <Route
+              path="/tasks"
+              element={<Tasks />}
+            />
+
+            <Route
+              path="/dependencies"
+              element={<Dependencies />}
+            />
+
+            <Route
+              path="/simulator"
+              element={<Simulator />}
+            />
+
+            <Route
+              path="/analytics"
+              element={<Analytics />}
+            />
+          </Route>
+
+          {/* Redirect unknown routes */}
           <Route
-            path="/projects"
-            element={<Projects />}
+            path="*"
+            element={<Navigate to="/" replace />}
           />
-
-          <Route
-            path="/tasks"
-            element={<Tasks />}
-          />
-
-          <Route
-            path="/dependencies"
-            element={<Dependencies />}
-          />
-
-          <Route
-            path="/simulator"
-            element={<Simulator />}
-          />
-
-          <Route
-            path="/analytics"
-            element={<Analytics />}
-          />
-        </Route>
-
-        {/* Redirect unknown routes */}
-        <Route
-          path="*"
-          element={<Navigate to="/" replace />}
-        />
-      </Routes>
-    </BrowserRouter>
+        </Routes>
+      </BrowserRouter>
+    </ThemeProvider>
   );
 }
 

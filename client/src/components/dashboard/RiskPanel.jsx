@@ -7,29 +7,30 @@ function RiskPanel({ projectId }) {
   const [riskData, setRiskData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
-  const loadRisks = async () => {
-    if (!projectId) return;
-
-    try {
-      setLoading(true);
-      setError("");
-
-      const response = await api.get(`/risks/${projectId}`);
-      setRiskData(response.data);
-    } catch (err) {
-      setError(
-        err.response?.data?.message ||
-          "Unable to load project risk analysis."
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
+    async function loadRisks() {
+      if (!projectId) return;
+
+      try {
+        setLoading(true);
+        setError("");
+
+        const response = await api.get(`/risks/${projectId}`);
+        setRiskData(response.data);
+      } catch (err) {
+        setError(
+          err.response?.data?.message ||
+            "Unable to load project risk analysis."
+        );
+      } finally {
+        setLoading(false);
+      }
+    }
+
     loadRisks();
-  }, [projectId]);
+  }, [projectId, refreshKey]);
 
   const getRiskColor = (level) => {
     if (level === "High") return "#dc2626";
@@ -64,7 +65,7 @@ function RiskPanel({ projectId }) {
         <button
           type="button"
           className="secondary-button"
-          onClick={loadRisks}
+          onClick={() => setRefreshKey((current) => current + 1)}
           disabled={loading}
         >
           <RefreshCw size={16} />

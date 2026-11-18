@@ -7,6 +7,9 @@ import {
   ListTodo,
   Pencil,
   AlertCircle,
+  CalendarDays,
+  ChevronRight,
+  ShieldAlert,
 } from "lucide-react";
 
 import Layout from "../components/layout/Layout";
@@ -28,6 +31,8 @@ function Dashboard() {
   const [projects, setProjects] = useState([]);
   const [activeProject, setActiveProject] = useState(null);
   const [tasks, setTasks] = useState([]);
+  const [projectRefreshKey, setProjectRefreshKey] = useState(0);
+  const [tasksRefreshKey, setTasksRefreshKey] = useState(0);
 
   const [reportCpm, setReportCpm] = useState(null);
   const [reportRisks, setReportRisks] = useState(null);
@@ -43,67 +48,60 @@ function Dashboard() {
   const [editingProject, setEditingProject] = useState(null);
   const [projectForm, setProjectForm] = useState(emptyProjectForm);
 
-  const loadProjects = async () => {
-    try {
-      setLoading(true);
-      setError("");
+  useEffect(() => {
+    async function loadProjects() {
+      try {
+        setLoading(true);
+        setError("");
 
-      const response = await api.get("/projects");
-      const list = response.data.projects || response.data;
+        const response = await api.get("/projects");
+        const list = response.data.projects || response.data;
 
-      setProjects(list);
+        setProjects(list);
 
-      if (list.length > 0) {
-        setActiveProject((current) =>
-          list.find((project) => project.id === current?.id) || list[0]
+        if (list.length > 0) {
+          setActiveProject((current) =>
+            list.find((project) => project.id === current?.id) || list[0]
+          );
+        } else {
+          setActiveProject(null);
+          setTasks([]);
+        }
+      } catch (err) {
+        setError(
+          err.response?.data?.message || "Projects could not be loaded."
         );
-      } else {
-        setActiveProject(null);
-        setTasks([]);
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      setError(
-        err.response?.data?.message || "Projects could not be loaded."
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadTasks = async (projectId) => {
-    if (!projectId) {
-      setTasks([]);
-      return;
     }
 
-    try {
-      setTasksLoading(true);
-
-      const response = await api.get("/tasks", {
-        params: { projectId },
-      });
-
-      const list = response.data.tasks || response.data;
-      setTasks(Array.isArray(list) ? list : []);
-    } catch (err) {
-      setError(err.response?.data?.message || "Tasks could not be loaded.");
-      setTasks([]);
-    } finally {
-      setTasksLoading(false);
-    }
-  };
-
-  useEffect(() => {
     loadProjects();
-  }, []);
+  }, [projectRefreshKey]);
 
   useEffect(() => {
-    if (activeProject?.id) {
-      loadTasks(activeProject.id);
-    } else {
-      setTasks([]);
+    if (!activeProject?.id) return;
+
+    async function loadTasks() {
+      try {
+        setTasksLoading(true);
+
+        const response = await api.get("/tasks", {
+          params: { projectId: activeProject.id },
+        });
+
+        const list = response.data.tasks || response.data;
+        setTasks(Array.isArray(list) ? list : []);
+      } catch (err) {
+        setError(err.response?.data?.message || "Tasks could not be loaded.");
+        setTasks([]);
+      } finally {
+        setTasksLoading(false);
+      }
     }
-  }, [activeProject?.id]);
+
+    loadTasks();
+  }, [activeProject?.id, tasksRefreshKey]);
 
   useEffect(() => {
     let cancelled = false;
@@ -246,7 +244,9 @@ function Dashboard() {
     return (
       <Layout {...layoutProps}>
         <div className="page-shell">
-          <p>Loading ProjectPulse...</p>
+          <div className="phase2-loading" role="status">
+            Loading your ProjectPulse workspace...
+          </div>
         </div>
       </Layout>
     );
@@ -254,143 +254,201 @@ function Dashboard() {
 
   return (
     <Layout {...layoutProps}>
-      <div className="page-shell">
-        <div className="glass-panel" style={{ padding: 28 }}>
-          <p className="eyebrow">PROJECTPULSE WORKSPACE</p>
-
-          <h1 style={{ marginTop: 8, fontSize: "2rem" }}>
-            Project Overview
-          </h1>
-
-          <p className="subtitle" style={{ marginTop: 8 }}>
-            A summary of your selected project and its delivery progress.
-          </p>
-
-          {error && (
-            <p style={{ color: "#dc6666", marginTop: 16 }}>
-              <AlertCircle size={16} style={{ verticalAlign: "middle" }} />
-              {" "}{error}
+      <div className="page-shell dashboard-page">
+        <section className="dashboard-hero">
+          <div className="dashboard-hero-copy">
+            <p className="eyebrow">PROJECTPULSE WORKSPACE</p>
+            <h1>Your work, in focus.</h1>
+            <p className="subtitle">
+              A clear view of your projects, task progress and delivery health.
             </p>
-          )}
-
-          <div style={{ marginTop: 25 }}>
-            <label className="eyebrow" htmlFor="project-selector">
-              SELECT PROJECT
-            </label>
-
-            <select
-              id="project-selector"
-              value={activeProject?.id || ""}
-              onChange={(event) => {
-                const selected = projects.find(
-                  (project) => project.id === event.target.value
-                );
-                setActiveProject(selected || null);
-              }}
-              style={{
-                display: "block",
-                width: "100%",
-                maxWidth: 420,
-                padding: 12,
-                marginTop: 8,
-                borderRadius: 10,
-              }}
-            >
-              <option value="">Choose a project</option>
-
-              {filteredProjects.map((project) => (
-                <option key={project.id} value={project.id}>
-                  {project.title}
-                </option>
-              ))}
-            </select>
           </div>
-        </div>
+          <button
+            type="button"
+            className="primary-button dashboard-create-button"
+            onClick={openCreateProject}
+          >
+            <FolderKanban size={17} /> New project
+          </button>
+        </section>
+
+        {error && (
+          <div className="phase2-alert" role="alert">
+            <AlertCircle size={17} aria-hidden="true" />
+            <span>{error}</span>
+          </div>
+        )}
+
+        <section className="dashboard-projects-section">
+          <div className="dashboard-section-heading">
+            <div>
+              <p className="eyebrow">YOUR PORTFOLIO</p>
+              <h2>Project overview</h2>
+            </div>
+            <label className="dashboard-project-selector">
+              <span className="eyebrow">ACTIVE PROJECT</span>
+              <select
+                id="project-selector"
+                value={activeProject?.id || ""}
+                onChange={(event) => {
+                  const selected = projects.find(
+                    (project) => project.id === event.target.value
+                  );
+                  setActiveProject(selected || null);
+                  if (!selected) {
+                    setTasks([]);
+                    setTasksLoading(false);
+                  }
+                }}
+              >
+                <option value="">Choose a project</option>
+                {filteredProjects.map((project) => (
+                  <option key={project.id} value={project.id}>
+                    {project.title}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+
+          {filteredProjects.length > 0 ? (
+            <div className="dashboard-project-grid">
+              {filteredProjects.map((project) => {
+                const isActive = project.id === activeProject?.id;
+                const taskCount = project._count?.tasks ??
+                  (isActive ? tasks.length : null);
+
+                return (
+                  <button
+                    type="button"
+                    key={project.id}
+                    className={`dashboard-project-card${isActive ? " is-active" : ""}`}
+                    onClick={() => setActiveProject(project)}
+                    aria-pressed={isActive}
+                  >
+                    <span className="dashboard-project-card-top">
+                      <span className="dashboard-project-icon">
+                        <FolderKanban size={19} />
+                      </span>
+                      <ChevronRight size={17} aria-hidden="true" />
+                    </span>
+                    <span className="dashboard-project-title">{project.title}</span>
+                    <span className="dashboard-project-meta">
+                      {taskCount === null
+                        ? "Task count unavailable"
+                        : `${taskCount} ${taskCount === 1 ? "task" : "tasks"}`}
+                    </span>
+                    {isActive && (
+                      <>
+                        <span className="dashboard-project-progress-label">
+                          <span>Completed tasks</span>
+                          <strong>{tasksLoading ? "Loading" : `${progress}%`}</strong>
+                        </span>
+                        <span
+                          className="dashboard-project-progress"
+                          aria-hidden="true"
+                        >
+                          <span
+                            style={{
+                              width: tasksLoading ? "0%" : `${progress}%`,
+                            }}
+                          />
+                        </span>
+                      </>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="dashboard-empty-state">
+              <FolderKanban size={24} />
+              <h2>{projects.length ? "No matching projects" : "No projects yet"}</h2>
+              <p className="subtitle">
+                {projects.length
+                  ? "Adjust your search to see another project."
+                  : "Create a project to start organizing your tasks and tracking progress."}
+              </p>
+              <button
+                type="button"
+                className="primary-button"
+                onClick={openCreateProject}
+              >
+                New project
+              </button>
+            </div>
+          )}
+        </section>
 
         {activeProject ? (
           <>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-                gap: 16,
-                marginTop: 20,
-              }}
-            >
-              <div className="glass-panel" style={{ padding: 22 }}>
-                <FolderKanban size={22} />
-                <p className="eyebrow" style={{ marginTop: 14 }}>
-                  TOTAL TASKS
-                </p>
-                <h2>{tasks.length}</h2>
-              </div>
+            <section className="dashboard-kpi-grid" aria-label="Project statistics">
+              <article className="dashboard-kpi-card">
+                <span className="dashboard-kpi-icon navy">
+                  <FolderKanban size={20} />
+                </span>
+                <span className="eyebrow">TOTAL TASKS</span>
+                <strong>{tasksLoading ? "..." : tasks.length}</strong>
+                <span className="dashboard-kpi-note">In this project</span>
+              </article>
+              <article className="dashboard-kpi-card">
+                <span className="dashboard-kpi-icon pink">
+                  <CheckCircle2 size={20} />
+                </span>
+                <span className="eyebrow">COMPLETED</span>
+                <strong>{tasksLoading ? "..." : completedTasks}</strong>
+                <span className="dashboard-kpi-note">Tasks marked complete</span>
+              </article>
+              <article className="dashboard-kpi-card">
+                <span className="dashboard-kpi-icon blue">
+                  <Clock3 size={20} />
+                </span>
+                <span className="eyebrow">PLANNED EFFORT</span>
+                <strong>{tasksLoading ? "..." : `${totalDuration} days`}</strong>
+                <span className="dashboard-kpi-note">Sum of task durations</span>
+              </article>
+              <article className="dashboard-kpi-card">
+                <span className="dashboard-kpi-icon navy">
+                  <ListTodo size={20} />
+                </span>
+                <span className="eyebrow">PROJECT PROGRESS</span>
+                <strong>{tasksLoading ? "..." : `${progress}%`}</strong>
+                <span className="dashboard-kpi-note">Based on completed tasks</span>
+              </article>
+            </section>
 
-              <div className="glass-panel" style={{ padding: 22 }}>
-                <CheckCircle2 size={22} />
-                <p className="eyebrow" style={{ marginTop: 14 }}>
-                  COMPLETED
-                </p>
-                <h2>{completedTasks}</h2>
-              </div>
-
-              <div className="glass-panel" style={{ padding: 22 }}>
-                <Clock3 size={22} />
-                <p className="eyebrow" style={{ marginTop: 14 }}>
-                  TOTAL TASK DURATION
-                </p>
-                <h2>{totalDuration} days</h2>
-              </div>
-
-              <div className="glass-panel" style={{ padding: 22 }}>
-                <ListTodo size={22} />
-                <p className="eyebrow" style={{ marginTop: 14 }}>
-                  PROJECT PROGRESS
-                </p>
-                <h2>{progress}%</h2>
-              </div>
-            </div>
-
-            <div
-              className="glass-panel"
-              style={{ padding: 24, marginTop: 20 }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  flexWrap: "wrap",
-                  gap: 12,
-                }}
-              >
+            <section className="dashboard-active-project">
+              <div className="dashboard-active-heading">
                 <div>
                   <p className="eyebrow">ACTIVE PROJECT</p>
-                  <h2 style={{ marginTop: 8 }}>{activeProject.title}</h2>
-
+                  <h2>{activeProject.title}</h2>
                   <p className="subtitle">
-                    {activeProject.description || "No project description"}
-                  </p>
-
-                  <p className="subtitle" style={{ marginTop: 8 }}>
-                    Deadline: {toDateInputValue(activeProject.deadline) || "Not set"}
+                    {activeProject.description || "No project description provided."}
                   </p>
                 </div>
-
-                <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                <div className="dashboard-active-actions">
+                  <span className="dashboard-deadline">
+                    <CalendarDays size={16} />
+                    Deadline: {toDateInputValue(activeProject.deadline) || "Not set"}
+                  </span>
                   <button
                     type="button"
                     className="secondary-button"
                     onClick={openEditProject}
                   >
-                    <Pencil size={16} /> Edit Project
+                    <Pencil size={16} /> Edit project
                   </button>
-
                   <button
                     type="button"
                     className="secondary-button"
                     onClick={() => {
-                      loadProjects();
-                      if (activeProject?.id) loadTasks(activeProject.id);
+                      setLoading(true);
+                      setError("");
+                      setProjectRefreshKey((current) => current + 1);
+                      if (activeProject?.id) {
+                        setTasksLoading(true);
+                        setTasksRefreshKey((current) => current + 1);
+                      }
                     }}
                     disabled={tasksLoading}
                   >
@@ -399,32 +457,94 @@ function Dashboard() {
                 </div>
               </div>
 
-              <div
-                style={{
-                  height: 10,
-                  background: "rgba(128,128,128,0.2)",
-                  borderRadius: 20,
-                  marginTop: 22,
-                  overflow: "hidden",
-                }}
-              >
-                <div
-                  style={{
-                    width: `${progress}%`,
-                    height: "100%",
-                    background: "#35a879",
-                    borderRadius: 20,
-                    transition: "width 0.4s ease",
-                  }}
-                />
+              <div className="dashboard-health-grid">
+                <article className="dashboard-health-card dashboard-progress-card">
+                  <div className="dashboard-health-heading">
+                    <div className="dashboard-kpi-icon pink">
+                      <CheckCircle2 size={19} />
+                    </div>
+                    <div>
+                      <span className="eyebrow">DELIVERY HEALTH</span>
+                      <h3>Task completion</h3>
+                    </div>
+                    <strong>{tasksLoading ? "..." : `${progress}%`}</strong>
+                  </div>
+                  <div
+                    className="dashboard-health-progress"
+                    role="progressbar"
+                    aria-label="Project task completion"
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-valuenow={tasksLoading ? undefined : progress}
+                  >
+                    <span
+                      style={{
+                        width: tasksLoading ? "0%" : `${progress}%`,
+                      }}
+                    />
+                  </div>
+                  <p className="subtitle">
+                    {tasksLoading
+                      ? "Loading project tasks..."
+                      : `${completedTasks} of ${tasks.length} tasks completed`}
+                  </p>
+                </article>
+
+                <article className="dashboard-health-card">
+                  <div className="dashboard-health-heading">
+                    <div className="dashboard-kpi-icon blue">
+                      <ShieldAlert size={19} />
+                    </div>
+                    <div>
+                      <span className="eyebrow">RISK OVERVIEW</span>
+                      <h3>Task risk levels</h3>
+                    </div>
+                  </div>
+                  {reportRisks?.riskSummary ? (
+                    <div className="dashboard-risk-summary">
+                      <span><i className="risk-dot high" /> High <strong>{reportRisks.riskSummary.high}</strong></span>
+                      <span><i className="risk-dot medium" /> Medium <strong>{reportRisks.riskSummary.medium}</strong></span>
+                      <span><i className="risk-dot low" /> Low <strong>{reportRisks.riskSummary.low}</strong></span>
+                    </div>
+                  ) : (
+                    <p className="subtitle">
+                      Risk summary is not available for this project yet.
+                    </p>
+                  )}
+                </article>
               </div>
 
-              <p className="subtitle" style={{ marginTop: 8 }}>
-                {tasksLoading
-                  ? "Refreshing project tasks..."
-                  : `${completedTasks} of ${tasks.length} tasks completed`}
-              </p>
-            </div>
+              <section className="dashboard-task-summary">
+                <div className="dashboard-section-heading">
+                  <div>
+                    <p className="eyebrow">TASK SUMMARY</p>
+                    <h3>Project tasks</h3>
+                  </div>
+                  <span className="dashboard-task-count">
+                    {tasksLoading ? "Loading..." : `${tasks.length} total`}
+                  </span>
+                </div>
+                {tasksLoading ? (
+                  <p className="subtitle">Loading tasks for this project...</p>
+                ) : tasks.length === 0 ? (
+                  <p className="subtitle">No tasks have been added to this project yet.</p>
+                ) : (
+                  <ul className="dashboard-task-list">
+                    {tasks.slice(0, 4).map((task) => (
+                      <li key={task.id}>
+                        <span>
+                          <span className="dashboard-task-marker" />
+                          {task.title}
+                        </span>
+                        <span className="dashboard-task-status">
+                          {task.status || "Not Started"}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+            </section>
 
             <ProjectReport
               project={activeProject}
@@ -435,21 +555,61 @@ function Dashboard() {
             />
           </>
         ) : (
-          <div
-            className="glass-panel"
-            style={{ padding: 32, marginTop: 20 }}
-          >
-            <h2>No projects found</h2>
-            <p className="subtitle" style={{ marginTop: 8 }}>
-              Use the New Project button to create your first project.
+          <div className="dashboard-empty-state">
+            {error && projects.length === 0 ? (
+              <AlertCircle size={24} />
+            ) : (
+              <FolderKanban size={24} />
+            )}
+            <h2>
+              {error && projects.length === 0
+                ? "Projects could not be loaded"
+                : projects.length
+                  ? "No matching projects"
+                  : "No projects yet"}
+            </h2>
+            <p className="subtitle">
+              {error && projects.length === 0
+                ? "Retry the request to load your project workspace."
+                : projects.length
+                  ? "Adjust your search to see another project."
+                  : "Create your first project to see its work and delivery progress here."}
             </p>
+            {error && projects.length === 0 ? (
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={() => {
+                  setLoading(true);
+                  setProjectRefreshKey((current) => current + 1);
+                }}
+              >
+                <RefreshCw size={16} /> Retry
+              </button>
+            ) : projects.length === 0 ? (
+              <button
+                type="button"
+                className="primary-button"
+                onClick={openCreateProject}
+              >
+                New project
+              </button>
+            ) : null}
           </div>
         )}
 
         {projectModalOpen && (
           <div className="modal-overlay">
-            <div className="modal-card">
-              <h2>{editingProject ? "Edit Project" : "Create New Project"}</h2>
+            <div
+              className="modal-card project-form-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="dashboard-project-modal-title"
+            >
+              <p className="eyebrow">PROJECT DETAILS</p>
+              <h2 id="dashboard-project-modal-title">
+                {editingProject ? "Edit project" : "Create a project"}
+              </h2>
 
               <form onSubmit={saveProject}>
                 <div className="form-group">
@@ -483,36 +643,43 @@ function Dashboard() {
                   />
                 </div>
 
-                <div className="form-group">
-                  <label htmlFor="project-start">Start date</label>
-                  <input
-                    id="project-start"
-                    type="date"
-                    value={projectForm.startDate}
-                    onChange={(event) =>
-                      setProjectForm({
-                        ...projectForm,
-                        startDate: event.target.value,
-                      })
-                    }
-                  />
+                <div className="project-date-fields">
+                  <div className="form-group">
+                    <label htmlFor="project-start">Start date</label>
+                    <input
+                      id="project-start"
+                      type="date"
+                      value={projectForm.startDate}
+                      onChange={(event) =>
+                        setProjectForm({
+                          ...projectForm,
+                          startDate: event.target.value,
+                        })
+                      }
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="project-deadline">Deadline</label>
+                    <input
+                      id="project-deadline"
+                      type="date"
+                      value={projectForm.deadline}
+                      onChange={(event) =>
+                        setProjectForm({
+                          ...projectForm,
+                          deadline: event.target.value,
+                        })
+                      }
+                    />
+                  </div>
                 </div>
 
-                <div className="form-group">
-                  <label htmlFor="project-deadline">Deadline</label>
-                  <input
-                    id="project-deadline"
-                    type="date"
-                    value={projectForm.deadline}
-                    onChange={(event) =>
-                      setProjectForm({
-                        ...projectForm,
-                        deadline: event.target.value,
-                      })
-                    }
-                  />
-                </div>
-
+                {error && (
+                  <div className="phase2-alert" role="alert">
+                    {error}
+                  </div>
+                )}
                 <div className="modal-actions">
                   <button
                     type="button"
@@ -530,7 +697,11 @@ function Dashboard() {
                     className="primary-button"
                     disabled={saving}
                   >
-                    {saving ? "Saving..." : "Save Project"}
+                    {saving
+                      ? "Saving..."
+                      : editingProject
+                        ? "Save changes"
+                        : "Create project"}
                   </button>
                 </div>
               </form>

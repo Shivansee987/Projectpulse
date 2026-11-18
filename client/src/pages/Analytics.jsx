@@ -16,7 +16,6 @@ import {
   TrendingUp,
   Users,
   Zap,
-  HeartPulse,
 } from "lucide-react";
 
 import Layout from "../components/layout/Layout";
@@ -351,95 +350,91 @@ function Analytics() {
   const [loading, setLoading] = useState(true);
   const [detailsLoading, setDetailsLoading] = useState(false);
   const [error, setError] = useState("");
-
-  const loadProjects = async () => {
-    try {
-      setLoading(true);
-      setError("");
-
-      const response = await api.get("/projects");
-      const list = getArray(response.data, ["projects", "data"]);
-
-      setProjects(list);
-
-      if (list.length) {
-        setSelectedProject((current) =>
-          list.some((project) => project.id === current)
-            ? current
-            : list[0].id
-        );
-      } else {
-        setSelectedProject("");
-        setTasks([]);
-        setCpm(null);
-        setRisks(null);
-        setInsights(null);
-      }
-    } catch (err) {
-      setError(err.response?.data?.message || "Could not load projects.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadAnalytics = async (projectId) => {
-    if (!projectId) return;
-
-    try {
-      setDetailsLoading(true);
-      setError("");
-
-      const results = await Promise.allSettled([
-        api.get(`/tasks?projectId=${projectId}`),
-        api.get(`/cpm/${projectId}`),
-        api.get(`/risks/${projectId}`),
-        api.get(`/insights/${projectId}`),
-      ]);
-
-      const [taskResult, cpmResult, riskResult, insightResult] = results;
-
-      if (taskResult.status === "fulfilled") {
-        setTasks(getArray(taskResult.value.data, ["tasks", "data"]));
-      } else {
-        setTasks([]);
-        setError("Tasks could not be loaded.");
-      }
-
-      setCpm(
-        cpmResult.status === "fulfilled"
-          ? getObject(cpmResult.value.data)
-          : null
-      );
-
-      setRisks(
-        riskResult.status === "fulfilled"
-          ? getObject(riskResult.value.data)
-          : null
-      );
-
-      setInsights(
-        insightResult.status === "fulfilled"
-          ? getObject(insightResult.value.data)
-          : null
-      );
-    } finally {
-      setDetailsLoading(false);
-    }
-  };
+  const [projectsRefreshKey, setProjectsRefreshKey] = useState(0);
+  const [analyticsRefreshKey, setAnalyticsRefreshKey] = useState(0);
 
   useEffect(() => {
+    async function loadProjects() {
+      try {
+        setLoading(true);
+        setError("");
+
+        const response = await api.get("/projects");
+        const list = getArray(response.data, ["projects", "data"]);
+
+        setProjects(list);
+
+        if (list.length) {
+          setSelectedProject((current) =>
+            list.some((project) => project.id === current)
+              ? current
+              : list[0].id
+          );
+        } else {
+          setSelectedProject("");
+          setTasks([]);
+          setCpm(null);
+          setRisks(null);
+          setInsights(null);
+        }
+      } catch (err) {
+        setError(err.response?.data?.message || "Could not load projects.");
+      } finally {
+        setLoading(false);
+      }
+    }
+
     loadProjects();
-  }, []);
+  }, [projectsRefreshKey]);
 
   useEffect(() => {
-    if (selectedProject) {
-      setTasks([]);
-      setCpm(null);
-      setRisks(null);
-      setInsights(null);
-      loadAnalytics(selectedProject);
+    if (!selectedProject) return;
+
+    async function loadAnalytics() {
+      try {
+        setDetailsLoading(true);
+        setError("");
+
+        const results = await Promise.allSettled([
+          api.get(`/tasks?projectId=${selectedProject}`),
+          api.get(`/cpm/${selectedProject}`),
+          api.get(`/risks/${selectedProject}`),
+          api.get(`/insights/${selectedProject}`),
+        ]);
+
+        const [taskResult, cpmResult, riskResult, insightResult] = results;
+
+        if (taskResult.status === "fulfilled") {
+          setTasks(getArray(taskResult.value.data, ["tasks", "data"]));
+        } else {
+          setTasks([]);
+          setError("Tasks could not be loaded.");
+        }
+
+        setCpm(
+          cpmResult.status === "fulfilled"
+            ? getObject(cpmResult.value.data)
+            : null
+        );
+
+        setRisks(
+          riskResult.status === "fulfilled"
+            ? getObject(riskResult.value.data)
+            : null
+        );
+
+        setInsights(
+          insightResult.status === "fulfilled"
+            ? getObject(insightResult.value.data)
+            : null
+        );
+      } finally {
+        setDetailsLoading(false);
+      }
     }
-  }, [selectedProject]);
+
+    loadAnalytics();
+  }, [selectedProject, analyticsRefreshKey]);
 
   const selectedProjectData = projects.find(
     (project) => project.id === selectedProject
@@ -582,8 +577,15 @@ function Analytics() {
       : colors.red;
 
   const refresh = () => {
-    if (selectedProject) loadAnalytics(selectedProject);
-    else loadProjects();
+    if (selectedProject) {
+      setDetailsLoading(true);
+      setError("");
+      setAnalyticsRefreshKey((current) => current + 1);
+    } else {
+      setLoading(true);
+      setError("");
+      setProjectsRefreshKey((current) => current + 1);
+    }
   };
 
   return (
@@ -743,7 +745,15 @@ function Analytics() {
 
           <select
             value={selectedProject}
-            onChange={(event) => setSelectedProject(event.target.value)}
+            onChange={(event) => {
+              setTasks([]);
+              setCpm(null);
+              setRisks(null);
+              setInsights(null);
+              setDetailsLoading(true);
+              setError("");
+              setSelectedProject(event.target.value);
+            }}
             disabled={loading || projects.length === 0}
             style={{
               minWidth: 220,
@@ -773,7 +783,14 @@ function Analytics() {
           <div style={panel}>
             <AlertCircle color={colors.red} />
             <p style={{ marginTop: 10 }}>{error}</p>
-            <button onClick={loadProjects} style={{ marginTop: 12 }}>
+            <button
+              onClick={() => {
+                setLoading(true);
+                setError("");
+                setProjectsRefreshKey((current) => current + 1);
+              }}
+              style={{ marginTop: 12 }}
+            >
               Try again
             </button>
           </div>

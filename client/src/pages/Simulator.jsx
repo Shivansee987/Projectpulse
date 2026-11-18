@@ -31,81 +31,79 @@ function Simulator() {
   const [success, setSuccess] = useState("");
   const [result, setResult] = useState(null);
 
-  // LOAD PROJECTS
-  const loadProjects = async () => {
-    try {
-      setLoadingProjects(true);
-      setError("");
-
-      const response = await api.get("/projects");
-      const list = response.data.projects || response.data;
-
-      setProjects(Array.isArray(list) ? list : []);
-
-      if (Array.isArray(list) && list.length > 0) {
-        setProjectId((current) =>
-          list.some((project) => project.id === current)
-            ? current
-            : list[0].id
-        );
-      } else {
-        setProjectId("");
-        setTasks([]);
-      }
-    } catch (err) {
-      setError(
-        err.response?.data?.message ||
-        "Could not load projects."
-      );
-    } finally {
-      setLoadingProjects(false);
-    }
-  };
-
-  // LOAD TASKS FOR SELECTED PROJECT
-  const loadTasks = async () => {
-    if (!projectId) {
-      setTasks([]);
-      setTaskId("");
-      return;
-    }
-
-    try {
-      setLoadingTasks(true);
-      setError("");
-      setResult(null);
-
-      const response = await api.get("/tasks", {
-        params: { projectId },
-      });
-
-      const list = response.data.tasks || response.data;
-      const safeTasks = Array.isArray(list) ? list : [];
-
-      setTasks(safeTasks);
-
-      setTaskId((current) =>
-        safeTasks.some((task) => task.id === current)
-          ? current
-          : ""
-      );
-    } catch (err) {
-      setTasks([]);
-      setTaskId("");
-      setError(
-        err.response?.data?.message ||
-        "Could not load project tasks."
-      );
-    } finally {
-      setLoadingTasks(false);
-    }
-  };
-
   useEffect(() => {
+    async function loadProjects() {
+      try {
+        setLoadingProjects(true);
+        setError("");
+
+        const response = await api.get("/projects");
+        const list = response.data.projects || response.data;
+
+        setProjects(Array.isArray(list) ? list : []);
+
+        if (Array.isArray(list) && list.length > 0) {
+          setProjectId((current) =>
+            list.some((project) => project.id === current)
+              ? current
+              : list[0].id
+          );
+        } else {
+          setProjectId("");
+          setTasks([]);
+        }
+      } catch (err) {
+        setError(
+          err.response?.data?.message ||
+          "Could not load projects."
+        );
+      } finally {
+        setLoadingProjects(false);
+      }
+    }
+
     loadProjects();
   }, []);
 
   useEffect(() => {
+    async function loadTasks() {
+      if (!projectId) {
+        setTasks([]);
+        setTaskId("");
+        return;
+      }
+
+      try {
+        setLoadingTasks(true);
+        setError("");
+        setResult(null);
+
+        const response = await api.get("/tasks", {
+          params: { projectId },
+        });
+
+        const list = response.data.tasks || response.data;
+        const safeTasks = Array.isArray(list) ? list : [];
+
+        setTasks(safeTasks);
+
+        setTaskId((current) =>
+          safeTasks.some((task) => task.id === current)
+            ? current
+            : ""
+        );
+      } catch (err) {
+        setTasks([]);
+        setTaskId("");
+        setError(
+          err.response?.data?.message ||
+          "Could not load project tasks."
+        );
+      } finally {
+        setLoadingTasks(false);
+      }
+    }
+
     loadTasks();
   }, [projectId]);
 
@@ -159,19 +157,6 @@ function Simulator() {
   const selectedTask = tasks.find(
     (task) => task.id === taskId
   );
-
-  const durationDifference = result
-    ? result.projectDuration -
-      Math.max(
-        ...result.tasks.map((task) => task.EF)
-      )
-    : 0;
-
-  const formatDifference = (value) => {
-    if (value > 0) return `+${value} days`;
-    if (value < 0) return `${value} days`;
-    return "No change";
-  };
 
   return (
     <Layout
