@@ -15,6 +15,13 @@ import {
 import Layout from "../components/layout/Layout";
 import api from "../services/api";
 import ProjectReport from "../components/dashboard/ProjectReport";
+import {
+  ACTIVE_PROJECT_CHANGE_EVENT,
+  emitActiveProjectChange,
+  emitProjectsLoaded,
+  getActiveProjectId,
+  upsertProject,
+} from "../utils/activeProject";
 
 const emptyProjectForm = {
   title: "",
@@ -56,12 +63,16 @@ function Dashboard() {
 
         const response = await api.get("/projects");
         const list = response.data.projects || response.data;
+        const savedProjectId = getActiveProjectId();
 
         setProjects(list);
+        emitProjectsLoaded(list);
 
         if (list.length > 0) {
           setActiveProject((current) =>
-            list.find((project) => project.id === current?.id) || list[0]
+            list.find((project) => project.id === current?.id) ||
+            list.find((project) => project.id === savedProjectId) ||
+            list[0]
           );
         } else {
           setActiveProject(null);
@@ -78,6 +89,49 @@ function Dashboard() {
 
     loadProjects();
   }, [projectRefreshKey]);
+
+  useEffect(() => {
+    function syncActiveProject(event) {
+      const { projectId, project } = event.detail || {};
+
+      if (!projectId) {
+        setActiveProject(null);
+        return;
+      }
+
+      if (project) {
+        setProjects((current) => upsertProject(current, project));
+      }
+
+      const selected =
+        projects.find((item) => item.id === projectId) ||
+        (project?.id === projectId ? project : null);
+      if (selected) setActiveProject(selected);
+    }
+
+    window.addEventListener(
+      ACTIVE_PROJECT_CHANGE_EVENT,
+      syncActiveProject
+    );
+
+    return () =>
+      window.removeEventListener(
+        ACTIVE_PROJECT_CHANGE_EVENT,
+        syncActiveProject
+      );
+  }, [projects]);
+
+  useEffect(() => {
+    if (!activeProject && loading) return;
+
+    if (activeProject?.id) {
+      localStorage.setItem("activeProjectId", activeProject.id);
+    } else if (!loading) {
+      localStorage.removeItem("activeProjectId");
+    }
+
+    emitActiveProjectChange(activeProject?.id || "", activeProject);
+  }, [activeProject, loading]);
 
   useEffect(() => {
     if (!activeProject?.id) return;
@@ -285,30 +339,6 @@ function Dashboard() {
               <p className="eyebrow">YOUR PORTFOLIO</p>
               <h2>Project overview</h2>
             </div>
-            <label className="dashboard-project-selector">
-              <span className="eyebrow">ACTIVE PROJECT</span>
-              <select
-                id="project-selector"
-                value={activeProject?.id || ""}
-                onChange={(event) => {
-                  const selected = projects.find(
-                    (project) => project.id === event.target.value
-                  );
-                  setActiveProject(selected || null);
-                  if (!selected) {
-                    setTasks([]);
-                    setTasksLoading(false);
-                  }
-                }}
-              >
-                <option value="">Choose a project</option>
-                {filteredProjects.map((project) => (
-                  <option key={project.id} value={project.id}>
-                    {project.title}
-                  </option>
-                ))}
-              </select>
-            </label>
           </div>
 
           {filteredProjects.length > 0 ? (
@@ -369,13 +399,6 @@ function Dashboard() {
                   ? "Adjust your search to see another project."
                   : "Create a project to start organizing your tasks and tracking progress."}
               </p>
-              <button
-                type="button"
-                className="primary-button"
-                onClick={openCreateProject}
-              >
-                New project
-              </button>
             </div>
           )}
         </section>
@@ -585,14 +608,6 @@ function Dashboard() {
                 }}
               >
                 <RefreshCw size={16} /> Retry
-              </button>
-            ) : projects.length === 0 ? (
-              <button
-                type="button"
-                className="primary-button"
-                onClick={openCreateProject}
-              >
-                New project
               </button>
             ) : null}
           </div>

@@ -9,6 +9,12 @@ import {
 } from "lucide-react";
 import Layout from "../components/layout/Layout";
 import api from "../services/api";
+import {
+  ACTIVE_PROJECT_CHANGE_EVENT,
+  emitProjectsLoaded,
+  getActiveProjectId,
+  selectActiveProject,
+} from "../utils/activeProject";
 
 const emptyProjectForm = {
   title: "",
@@ -50,6 +56,7 @@ async function fetchProjectOverview() {
   if (!Array.isArray(projects)) {
     throw new Error("The project response was not a list.");
   }
+  emitProjectsLoaded(projects);
 
   const results = await Promise.allSettled(
     projects.map(async (project) => {
@@ -102,6 +109,7 @@ async function fetchProjectOverview() {
 
 function Projects() {
   const [projects, setProjects] = useState([]);
+  const [activeProjectId, setActiveProjectId] = useState(getActiveProjectId);
   const [projectStats, setProjectStats] = useState({});
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
@@ -112,6 +120,23 @@ function Projects() {
   const [projectModalOpen, setProjectModalOpen] = useState(false);
   const [editingProject, setEditingProject] = useState(null);
   const [projectForm, setProjectForm] = useState(emptyProjectForm);
+
+  useEffect(() => {
+    function handleActiveProjectChange(event) {
+      setActiveProjectId(event.detail?.projectId || "");
+    }
+
+    window.addEventListener(
+      ACTIVE_PROJECT_CHANGE_EVENT,
+      handleActiveProjectChange
+    );
+
+    return () =>
+      window.removeEventListener(
+        ACTIVE_PROJECT_CHANGE_EVENT,
+        handleActiveProjectChange
+      );
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -360,7 +385,10 @@ function Projects() {
                     )}
                   </div>
 
-                  <div className="project-card-footer">
+                  <div
+                    className="project-card-footer"
+                    style={{ flexWrap: "wrap" }}
+                  >
                     <span>
                       {summary
                         ? `${summary.total} ${summary.total === 1 ? "task" : "tasks"}`
@@ -368,14 +396,30 @@ function Projects() {
                           ? `${project._count.tasks} tasks`
                           : "Task count unavailable"}
                     </span>
-                    <button
-                      type="button"
-                      className="secondary-button project-edit-button"
-                      onClick={() => openEditProject(project)}
-                      aria-label={`Edit ${project.title}`}
-                    >
-                      <Pencil size={15} /> Edit
-                    </button>
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                      <button
+                        type="button"
+                        className="secondary-button project-edit-button"
+                        onClick={() => selectActiveProject(project)}
+                        disabled={activeProjectId === project.id}
+                        aria-pressed={activeProjectId === project.id}
+                        aria-label={
+                          activeProjectId === project.id
+                            ? `${project.title} is the active project`
+                            : `Set ${project.title} as the active project`
+                        }
+                      >
+                        {activeProjectId === project.id ? "Active" : "Set active"}
+                      </button>
+                      <button
+                        type="button"
+                        className="secondary-button project-edit-button"
+                        onClick={() => openEditProject(project)}
+                        aria-label={`Edit ${project.title}`}
+                      >
+                        <Pencil size={15} /> Edit
+                      </button>
+                    </div>
                   </div>
                 </article>
               );

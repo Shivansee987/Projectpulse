@@ -5,6 +5,12 @@ import { GitBranch } from "lucide-react";
 import Layout from "../components/layout/Layout";
 import DependencyGraph from "../components/dashboard/DependencyGraph";
 import api from "../services/api";
+import {
+  ACTIVE_PROJECT_CHANGE_EVENT,
+  getActiveProjectId,
+  selectActiveProject,
+  syncActiveProject,
+} from "../utils/activeProject";
 
 function Dependencies() {
   const [projects, setProjects] = useState([]);
@@ -19,17 +25,20 @@ function Dependencies() {
       try {
         const response = await api.get("/projects");
         const list = response.data.projects || response.data;
+        if (!Array.isArray(list)) {
+          throw new Error("The project response was not a list.");
+        }
         setProjects(list);
 
-        const savedId = localStorage.getItem("activeProjectId");
+        const savedId = getActiveProjectId();
         const selectedProject = list.find(
           (project) => project.id === savedId
         ) || list[0];
 
         if (selectedProject) {
           setProjectId(selectedProject.id);
-          localStorage.setItem("activeProjectId", selectedProject.id);
         }
+        selectActiveProject(selectedProject || null);
       } catch (err) {
         setError(
           err.response?.data?.message || "Could not load projects."
@@ -40,6 +49,25 @@ function Dependencies() {
     }
 
     loadProjects();
+  }, []);
+
+  useEffect(() => {
+    function handleActiveProjectChange(event) {
+      syncActiveProject(event, setProjects, setProjectId);
+      setTasks([]);
+      setError("");
+    }
+
+    window.addEventListener(
+      ACTIVE_PROJECT_CHANGE_EVENT,
+      handleActiveProjectChange
+    );
+
+    return () =>
+      window.removeEventListener(
+        ACTIVE_PROJECT_CHANGE_EVENT,
+        handleActiveProjectChange
+      );
   }, []);
 
   useEffect(() => {
@@ -85,8 +113,8 @@ function Dependencies() {
 
   function handleProjectChange(event) {
     const id = event.target.value;
-    setProjectId(id);
-    localStorage.setItem("activeProjectId", id);
+    const project = projects.find((item) => item.id === id) || null;
+    selectActiveProject(project);
   }
 
   return (
