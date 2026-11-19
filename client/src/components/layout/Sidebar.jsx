@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import {
   BarChart3,
   ChevronLeft,
@@ -12,6 +13,14 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { navItems } from "../../data/projectData";
+import api from "../../services/api";
+import {
+  ACTIVE_PROJECT_CHANGE_EVENT,
+  PROJECTS_LOADED_EVENT,
+  getActiveProjectId,
+  selectActiveProject,
+  syncActiveProject,
+} from "../../utils/activeProject";
 
 const iconMap = {
   overview: LayoutGrid,
@@ -44,6 +53,97 @@ function Sidebar({
 }) {
   const navigate = useNavigate();
   const ThemeIcon = theme === "dark" ? Sun : Moon;
+  const [projects, setProjects] = useState([]);
+  const [selectedProjectId, setSelectedProjectId] = useState(
+    getActiveProjectId
+  );
+  const [projectsLoading, setProjectsLoading] = useState(true);
+  const [projectsError, setProjectsError] = useState("");
+  const [projectsRefreshKey, setProjectsRefreshKey] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadProjects() {
+      try {
+        setProjectsLoading(true);
+        setProjectsError("");
+
+        const response = await api.get("/projects");
+        const data = response.data.projects || response.data;
+        if (!Array.isArray(data)) {
+          throw new Error("The project response was not a list.");
+        }
+        const list = data;
+
+        if (cancelled) return;
+
+        setProjects(list);
+        const savedId = getActiveProjectId();
+        const selected = list.find((project) => project.id === savedId) || list[0];
+        const selectedId = selected?.id || "";
+
+        setSelectedProjectId(selectedId);
+        selectActiveProject(selected || null);
+      } catch (error) {
+        if (!cancelled) {
+          setProjectsError(
+            error.response?.data?.message ||
+              error.message ||
+              "Could not load projects."
+          );
+        }
+      } finally {
+        if (!cancelled) setProjectsLoading(false);
+      }
+    }
+
+    loadProjects();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [projectsRefreshKey]);
+
+  useEffect(() => {
+    function handleActiveProjectChange(event) {
+      if (event.detail?.project) {
+        setProjectsError("");
+      }
+      syncActiveProject(event, setProjects, setSelectedProjectId);
+    }
+
+    window.addEventListener(
+      ACTIVE_PROJECT_CHANGE_EVENT,
+      handleActiveProjectChange
+    );
+
+    return () =>
+      window.removeEventListener(
+        ACTIVE_PROJECT_CHANGE_EVENT,
+        handleActiveProjectChange
+      );
+  }, []);
+
+  useEffect(() => {
+    function handleProjectsLoaded(event) {
+      const list = event.detail?.projects;
+      if (!Array.isArray(list)) return;
+
+      setProjects(list);
+      setProjectsError("");
+
+      const savedId = getActiveProjectId();
+      const selected = list.find((project) => project.id === savedId) || list[0];
+      setSelectedProjectId(selected?.id || "");
+      selectActiveProject(selected || null);
+    }
+
+    window.addEventListener(PROJECTS_LOADED_EVENT, handleProjectsLoaded);
+
+    return () =>
+      window.removeEventListener(PROJECTS_LOADED_EVENT, handleProjectsLoaded);
+  }, []);
 
   function handleNavigation(key) {
     const route = routeMap[key];
@@ -53,6 +153,14 @@ function Sidebar({
     setActiveTab?.(key);
     navigate(route);
     onNavigate?.();
+  }
+
+  function handleProjectChange(event) {
+    const projectId = event.target.value;
+    const project = projects.find((item) => item.id === projectId) || null;
+
+    setSelectedProjectId(projectId);
+    selectActiveProject(project);
   }
 
   return (
@@ -75,7 +183,106 @@ function Sidebar({
 
       <div className="project-switcher">
         <div className="project-switcher-label">Active Project</div>
-        <div className="project-switcher-value">Select a project</div>
+        <style>{`
+          .project-switcher-select {
+            display: block;
+            width: 100%;
+            min-width: 0;
+            padding: 2px 20px 2px 0;
+            border: 0;
+            outline: 0;
+            background: transparent;
+            color: #f8f7fa;
+            font-weight: 700;
+            font-size: 0.88rem;
+            text-overflow: ellipsis;
+            cursor: pointer;
+          }
+
+          .project-switcher-select:focus-visible {
+            outline: 2px solid #f6c8d5;
+            outline-offset: 3px;
+            border-radius: 4px;
+          }
+
+          .project-switcher-select option {
+            background: #f8f7fa;
+            color: #142b4a;
+          }
+
+          .project-switcher-state {
+            margin: 0;
+            overflow: hidden;
+            color: rgba(248, 247, 250, 0.72);
+            font-size: 0.78rem;
+            line-height: 1.4;
+            text-overflow: ellipsis;
+          }
+
+          .project-switcher-state p {
+            margin: 0;
+          }
+
+          .project-switcher-state.error {
+            color: #ffb0bd;
+          }
+
+          .project-switcher-retry {
+            margin-top: 6px;
+            padding: 0;
+            border: 0;
+            background: transparent;
+            color: #f6c8d5;
+            font: inherit;
+            font-weight: 700;
+            cursor: pointer;
+          }
+        `}</style>
+        {projectsLoading ? (
+          <p className="project-switcher-state" role="status" aria-live="polite">
+            Loading projects...
+          </p>
+        ) : projectsError ? (
+          <div className="project-switcher-state error" role="alert">
+            <p title={projectsError}>{projectsError}</p>
+            <button
+              type="button"
+              className="project-switcher-retry"
+              onClick={() =>
+                setProjectsRefreshKey((current) => current + 1)
+              }
+            >
+              Try again
+            </button>
+          </div>
+        ) : projects.length === 0 ? (
+          <div className="project-switcher-state" role="status">
+            <p>No projects available</p>
+            <button
+              type="button"
+              className="project-switcher-retry"
+              onClick={() =>
+                setProjectsRefreshKey((current) => current + 1)
+              }
+            >
+              Refresh
+            </button>
+          </div>
+        ) : (
+          <select
+            className="project-switcher-select"
+            aria-label="Active project"
+            value={selectedProjectId}
+            onChange={handleProjectChange}
+          >
+            <option value="">Select a project</option>
+            {projects.map((project) => (
+              <option key={project.id} value={project.id}>
+                {project.title}
+              </option>
+            ))}
+          </select>
+        )}
       </div>
 
       <nav className="sidebar-nav" aria-label="Main">

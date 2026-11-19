@@ -14,6 +14,12 @@ import {
 import Layout from "../components/layout/Layout";
 import SimulationHistory from "../components/dashboard/SimulationHistory";
 import api from "../services/api";
+import {
+  ACTIVE_PROJECT_CHANGE_EVENT,
+  getActiveProjectId,
+  selectActiveProject,
+  syncActiveProject,
+} from "../utils/activeProject";
 
 function Simulator() {
   const [projects, setProjects] = useState([]);
@@ -43,14 +49,15 @@ function Simulator() {
         setProjects(Array.isArray(list) ? list : []);
 
         if (Array.isArray(list) && list.length > 0) {
-          setProjectId((current) =>
-            list.some((project) => project.id === current)
-              ? current
-              : list[0].id
-          );
+          const savedId = getActiveProjectId();
+          const selected =
+            list.find((project) => project.id === savedId) || list[0];
+          setProjectId(selected.id);
+          selectActiveProject(selected);
         } else {
           setProjectId("");
           setTasks([]);
+          selectActiveProject(null);
         }
       } catch (err) {
         setError(
@@ -63,6 +70,28 @@ function Simulator() {
     }
 
     loadProjects();
+  }, []);
+
+  useEffect(() => {
+    function handleActiveProjectChange(event) {
+      syncActiveProject(event, setProjects, setProjectId);
+      setTasks([]);
+      setTaskId("");
+      setResult(null);
+      setError("");
+      setSuccess("");
+    }
+
+    window.addEventListener(
+      ACTIVE_PROJECT_CHANGE_EVENT,
+      handleActiveProjectChange
+    );
+
+    return () =>
+      window.removeEventListener(
+        ACTIVE_PROJECT_CHANGE_EVENT,
+        handleActiveProjectChange
+      );
   }, []);
 
   useEffect(() => {
@@ -246,10 +275,10 @@ function Simulator() {
                 <select
                   value={projectId}
                   onChange={(e) => {
-                    setProjectId(e.target.value);
-                    setResult(null);
-                    setError("");
-                    setSuccess("");
+                    const project =
+                      projects.find((item) => item.id === e.target.value) ||
+                      null;
+                    selectActiveProject(project);
                   }}
                   disabled={loadingProjects || projects.length === 0}
                   required

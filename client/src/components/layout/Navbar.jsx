@@ -1,7 +1,6 @@
 import { useState } from "react";
 import {
   Bell,
-  FolderPlus,
   Menu,
   Plus,
   Search,
@@ -23,7 +22,6 @@ function Navbar({
   mobileNavOpen,
   onMenuToggle,
   onTaskModalOpen,
-  onProjectModalOpen,
   onSearch,
 }) {
   const [searchText, setSearchText] = useState("");
@@ -142,16 +140,6 @@ function Navbar({
           </button>
         )}
 
-        {onProjectModalOpen && (
-          <button
-            type="button"
-            className="secondary-button"
-            onClick={onProjectModalOpen}
-          >
-            <FolderPlus size={17} aria-hidden="true" />
-            <span>New Project</span>
-          </button>
-        )}
       </div>
     </header>
   );
