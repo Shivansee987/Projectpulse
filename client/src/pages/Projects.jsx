@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import Layout from "../components/layout/Layout";
 import api from "../services/api";
+import { emitProjectsLoaded } from "../utils/activeProject";
 
 const emptyProjectForm = {
   title: "",
@@ -50,6 +51,7 @@ async function fetchProjectOverview() {
   if (!Array.isArray(projects)) {
     throw new Error("The project response was not a list.");
   }
+  emitProjectsLoaded(projects);
 
   const results = await Promise.allSettled(
     projects.map(async (project) => {

@@ -14,6 +14,13 @@ import {
 import { useNavigate } from "react-router-dom";
 import { navItems } from "../../data/projectData";
 import api from "../../services/api";
+import {
+  ACTIVE_PROJECT_CHANGE_EVENT,
+  PROJECTS_LOADED_EVENT,
+  getActiveProjectId,
+  selectActiveProject,
+  syncActiveProject,
+} from "../../utils/activeProject";
 
 const iconMap = {
   overview: LayoutGrid,
@@ -48,10 +55,11 @@ function Sidebar({
   const ThemeIcon = theme === "dark" ? Sun : Moon;
   const [projects, setProjects] = useState([]);
   const [selectedProjectId, setSelectedProjectId] = useState(
-    () => localStorage.getItem("activeProjectId") || ""
+    getActiveProjectId
   );
   const [projectsLoading, setProjectsLoading] = useState(true);
   const [projectsError, setProjectsError] = useState("");
+  const [projectsRefreshKey, setProjectsRefreshKey] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -63,31 +71,26 @@ function Sidebar({
 
         const response = await api.get("/projects");
         const data = response.data.projects || response.data;
-        const list = Array.isArray(data) ? data : [];
+        if (!Array.isArray(data)) {
+          throw new Error("The project response was not a list.");
+        }
+        const list = data;
 
         if (cancelled) return;
 
         setProjects(list);
-        const savedId = localStorage.getItem("activeProjectId");
+        const savedId = getActiveProjectId();
         const selected = list.find((project) => project.id === savedId) || list[0];
         const selectedId = selected?.id || "";
 
         setSelectedProjectId(selectedId);
-        if (selectedId) {
-          localStorage.setItem("activeProjectId", selectedId);
-        } else {
-          localStorage.removeItem("activeProjectId");
-        }
-
-        window.dispatchEvent(
-          new CustomEvent("projectpulse:active-project-change", {
-            detail: { projectId: selectedId, project: selected || null },
-          })
-        );
+        selectActiveProject(selected || null);
       } catch (error) {
         if (!cancelled) {
           setProjectsError(
-            error.response?.data?.message || "Could not load projects."
+            error.response?.data?.message ||
+              error.message ||
+              "Could not load projects."
           );
         }
       } finally {
@@ -100,40 +103,47 @@ function Sidebar({
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [projectsRefreshKey]);
 
   useEffect(() => {
-    function syncSelectedProject(event) {
-      const { projectId, project } = event.detail || {};
-
-      if (project) {
-        setProjects((current) =>
-          current.some((item) => item.id === project.id)
-            ? current.map((item) => (item.id === project.id ? project : item))
-            : [...current, project]
-        );
+    function handleActiveProjectChange(event) {
+      if (event.detail?.project) {
+        setProjectsError("");
       }
-
-      if (
-        !projectId ||
-        projects.some((item) => item.id === projectId) ||
-        project?.id === projectId
-      ) {
-        setSelectedProjectId(projectId || "");
-      }
+      syncActiveProject(event, setProjects, setSelectedProjectId);
     }
 
     window.addEventListener(
-      "projectpulse:active-project-change",
-      syncSelectedProject
+      ACTIVE_PROJECT_CHANGE_EVENT,
+      handleActiveProjectChange
     );
 
     return () =>
       window.removeEventListener(
-        "projectpulse:active-project-change",
-        syncSelectedProject
+        ACTIVE_PROJECT_CHANGE_EVENT,
+        handleActiveProjectChange
       );
-  }, [projects]);
+  }, []);
+
+  useEffect(() => {
+    function handleProjectsLoaded(event) {
+      const list = event.detail?.projects;
+      if (!Array.isArray(list)) return;
+
+      setProjects(list);
+      setProjectsError("");
+
+      const savedId = getActiveProjectId();
+      const selected = list.find((project) => project.id === savedId) || list[0];
+      setSelectedProjectId(selected?.id || "");
+      selectActiveProject(selected || null);
+    }
+
+    window.addEventListener(PROJECTS_LOADED_EVENT, handleProjectsLoaded);
+
+    return () =>
+      window.removeEventListener(PROJECTS_LOADED_EVENT, handleProjectsLoaded);
+  }, []);
 
   function handleNavigation(key) {
     const route = routeMap[key];
@@ -150,17 +160,7 @@ function Sidebar({
     const project = projects.find((item) => item.id === projectId) || null;
 
     setSelectedProjectId(projectId);
-    if (projectId) {
-      localStorage.setItem("activeProjectId", projectId);
-    } else {
-      localStorage.removeItem("activeProjectId");
-    }
-
-    window.dispatchEvent(
-      new CustomEvent("projectpulse:active-project-change", {
-        detail: { projectId, project },
-      })
-    );
+    selectActiveProject(project);
   }
 
   return (
@@ -219,8 +219,23 @@ function Sidebar({
             text-overflow: ellipsis;
           }
 
+          .project-switcher-state p {
+            margin: 0;
+          }
+
           .project-switcher-state.error {
             color: #ffb0bd;
+          }
+
+          .project-switcher-retry {
+            margin-top: 6px;
+            padding: 0;
+            border: 0;
+            background: transparent;
+            color: #f6c8d5;
+            font: inherit;
+            font-weight: 700;
+            cursor: pointer;
           }
         `}</style>
         {projectsLoading ? (
@@ -228,17 +243,31 @@ function Sidebar({
             Loading projects...
           </p>
         ) : projectsError ? (
-          <p
-            className="project-switcher-state error"
-            role="alert"
-            title={projectsError}
-          >
-            {projectsError}
-          </p>
+          <div className="project-switcher-state error" role="alert">
+            <p title={projectsError}>{projectsError}</p>
+            <button
+              type="button"
+              className="project-switcher-retry"
+              onClick={() =>
+                setProjectsRefreshKey((current) => current + 1)
+              }
+            >
+              Try again
+            </button>
+          </div>
         ) : projects.length === 0 ? (
-          <p className="project-switcher-state" role="status">
-            No projects available
-          </p>
+          <div className="project-switcher-state" role="status">
+            <p>No projects available</p>
+            <button
+              type="button"
+              className="project-switcher-retry"
+              onClick={() =>
+                setProjectsRefreshKey((current) => current + 1)
+              }
+            >
+              Refresh
+            </button>
+          </div>
         ) : (
           <select
             className="project-switcher-select"

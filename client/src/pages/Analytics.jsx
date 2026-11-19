@@ -20,6 +20,12 @@ import {
 
 import Layout from "../components/layout/Layout";
 import api from "../services/api";
+import {
+  ACTIVE_PROJECT_CHANGE_EVENT,
+  getActiveProjectId,
+  selectActiveProject,
+  syncActiveProject,
+} from "../utils/activeProject";
 
 const colors = {
   purple: "var(--a-accent)",
@@ -367,17 +373,18 @@ function Analytics() {
         setProjects(list);
 
         if (list.length) {
-          setSelectedProject((current) =>
-            list.some((project) => project.id === current)
-              ? current
-              : list[0].id
-          );
+          const savedId = getActiveProjectId();
+          const selected =
+            list.find((project) => project.id === savedId) || list[0];
+          setSelectedProject(selected.id);
+          selectActiveProject(selected);
         } else {
           setSelectedProject("");
           setTasks([]);
           setCpm(null);
           setRisks(null);
           setInsights(null);
+          selectActiveProject(null);
         }
       } catch (err) {
         setError(err.response?.data?.message || "Could not load projects.");
@@ -388,6 +395,29 @@ function Analytics() {
 
     loadProjects();
   }, [projectsRefreshKey]);
+
+  useEffect(() => {
+    function handleActiveProjectChange(event) {
+      syncActiveProject(event, setProjects, setSelectedProject);
+      setTasks([]);
+      setCpm(null);
+      setRisks(null);
+      setInsights(null);
+      setDetailsLoading(Boolean(event.detail?.projectId));
+      setError("");
+    }
+
+    window.addEventListener(
+      ACTIVE_PROJECT_CHANGE_EVENT,
+      handleActiveProjectChange
+    );
+
+    return () =>
+      window.removeEventListener(
+        ACTIVE_PROJECT_CHANGE_EVENT,
+        handleActiveProjectChange
+      );
+  }, []);
 
   useEffect(() => {
     if (!selectedProject) return;
@@ -516,8 +546,6 @@ function Analytics() {
   const completionProgress = Number.isFinite(analytics.progress)
     ? Math.min(100, Math.max(0, analytics.progress))
     : 0;
-  const completionRingCircumference = 2 * Math.PI * 52.5;
-
   const riskList = useMemo(() => {
     if (Array.isArray(risks)) return risks;
 
@@ -864,13 +892,10 @@ function Analytics() {
             aria-label="Select analytics project"
             value={selectedProject}
             onChange={(event) => {
-              setTasks([]);
-              setCpm(null);
-              setRisks(null);
-              setInsights(null);
-              setDetailsLoading(true);
-              setError("");
-              setSelectedProject(event.target.value);
+              const project =
+                projects.find((item) => item.id === event.target.value) ||
+                null;
+              selectActiveProject(project);
             }}
             disabled={loading || projects.length === 0}
             style={{
@@ -1004,15 +1029,13 @@ function Analytics() {
                       cx="56"
                       cy="56"
                       r="52.5"
+                      pathLength="100"
                       fill="none"
                       stroke="#ffffff"
                       strokeWidth="7"
                       strokeLinecap="butt"
-                      strokeDasharray={`${completionRingCircumference} ${completionRingCircumference}`}
-                      strokeDashoffset={
-                        completionRingCircumference *
-                        (1 - completionProgress / 100)
-                      }
+                      strokeDasharray="100 100"
+                      strokeDashoffset={100 - completionProgress}
                       transform="rotate(-90 56 56)"
                       style={{
                         opacity: completionProgress <= 0 ? 0 : 1,
@@ -1033,7 +1056,14 @@ function Analytics() {
               </div>
 
               <div
+                role="progressbar"
+                aria-label="Project task completion"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={completionProgress}
+                aria-valuetext={`${completionProgress}%`}
                 style={{
+                  width: "100%",
                   height: 9,
                   background: "rgba(255,255,255,.2)",
                   borderRadius: 20,
@@ -1043,7 +1073,8 @@ function Analytics() {
               >
                 <div
                   style={{
-                    width: `${analytics.progress}%`,
+                    display: "block",
+                    width: `${completionProgress}%`,
                     height: "100%",
                     background: "#ffffff",
                     borderRadius: 20,

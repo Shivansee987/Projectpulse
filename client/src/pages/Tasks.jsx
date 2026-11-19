@@ -10,6 +10,12 @@ import {
 } from "lucide-react";
 import Layout from "../components/layout/Layout";
 import api from "../services/api";
+import {
+  ACTIVE_PROJECT_CHANGE_EVENT,
+  getActiveProjectId,
+  selectActiveProject,
+  syncActiveProject,
+} from "../utils/activeProject";
 
 const emptyForm = {
   title: "",
@@ -73,12 +79,15 @@ function Tasks() {
         setProjectsLoadFailed(false);
 
         if (list.length > 0) {
-          setProjectId((current) =>
-            list.some((p) => p.id === current) ? current : list[0].id
-          );
+          const savedId = getActiveProjectId();
+          const selected =
+            list.find((project) => project.id === savedId) || list[0];
+          setProjectId(selected.id);
+          selectActiveProject(selected);
         } else {
           setProjectId("");
           setTasks([]);
+          selectActiveProject(null);
         }
       } catch (err) {
         setError(
@@ -92,6 +101,25 @@ function Tasks() {
 
     loadProjects();
   }, [projectsRefreshKey]);
+
+  useEffect(() => {
+    function handleActiveProjectChange(event) {
+      syncActiveProject(event, setProjects, setProjectId);
+      setTasks([]);
+      setError("");
+    }
+
+    window.addEventListener(
+      ACTIVE_PROJECT_CHANGE_EVENT,
+      handleActiveProjectChange
+    );
+
+    return () =>
+      window.removeEventListener(
+        ACTIVE_PROJECT_CHANGE_EVENT,
+        handleActiveProjectChange
+      );
+  }, []);
 
   useEffect(() => {
     if (!projectId) return;
@@ -241,7 +269,12 @@ function Tasks() {
             <select
               aria-label="Select project for task list"
               value={projectId}
-              onChange={(e) => setProjectId(e.target.value)}
+              onChange={(event) => {
+                const project =
+                  projects.find((item) => item.id === event.target.value) ||
+                  null;
+                selectActiveProject(project);
+              }}
               disabled={projectsLoading || projects.length === 0}
             >
               {projects.length === 0 && <option value="">No projects available</option>}
