@@ -15,12 +15,13 @@ const insightsRoutes = require("./routes/insights.routes");
 
 const app = express();
 
+const isProduction = process.env.NODE_ENV === "production";
+const frontendOrigin = process.env.FRONTEND_URL?.trim().replace(/\/+$/, "");
 const allowedOrigins = new Set(
   [
-    process.env.FRONTEND_URL,
-    ...(process.env.NODE_ENV === "production"
-      ? []
-      : ["http://localhost:5173"]),
+    frontendOrigin ||
+      (isProduction ? "https://projectpulse-swart.vercel.app" : null),
+    ...(isProduction ? [] : ["http://localhost:5173"]),
   ].filter(Boolean)
 );
 
