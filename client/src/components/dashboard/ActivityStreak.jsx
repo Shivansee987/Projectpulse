@@ -25,30 +25,34 @@ function loadStreak() {
   }
 }
 
+function getInitialStreak() {
+  const saved = loadStreak();
+  const today = getToday();
+
+  if (saved.lastActive === today) {
+    return { streak: saved, shouldPersist: false };
+  }
+
+  const current =
+    saved.lastActive === getYesterday() ? saved.current + 1 : 1;
+  const streak = {
+    ...saved,
+    current,
+    longest: Math.max(saved.longest, current),
+    lastActive: today,
+  };
+
+  return { streak, shouldPersist: true };
+}
+
 export default function ActivityStreak() {
-  const [streak, setStreak] = useState(loadStreak);
+  const [initialStreak] = useState(getInitialStreak);
+  const { streak } = initialStreak;
 
   useEffect(() => {
-    if (streak.lastActive === getToday()) return;
-
-    const updated = {
-      ...streak,
-      current:
-        streak.lastActive === getYesterday()
-          ? streak.current + 1
-          : 1,
-      longest: Math.max(
-        streak.longest,
-        streak.lastActive === getYesterday()
-          ? streak.current + 1
-          : 1
-      ),
-      lastActive: getToday(),
-    };
-
-    setStreak(updated);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-  }, []);
+    if (!initialStreak.shouldPersist) return;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(streak));
+  }, [initialStreak, streak]);
 
   return (
     <section className="activity-streak-card">

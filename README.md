@@ -353,7 +353,43 @@ VITE_API_URL=http://localhost:5000/api
 
 For deployment, set `VITE_API_URL` in the frontend build environment to the deployed backend API URL ending in `/api`. Vite embeds `VITE_*` values in browser assets, so this URL is public configuration; never put credentials or other secrets in it. If unset, local development uses the localhost fallback, while production builds require the variable to be set.
 
-\### 5. Generate Prisma Client
+\### 5. Deploying to Render and Vercel
+
+Deploy the backend and frontend as separate services. These settings are entered in the hosting dashboards; no deployment or database migration is run by this repository.
+
+\#### Render backend
+
+Create a Render Web Service using these settings:
+
+- Root Directory: `server`
+- Build Command: `npm install`
+- Start Command: `npm start`
+
+Set these Render environment variables:
+
+- `NODE_ENV=production`
+- `DATABASE_URL`: your Neon PostgreSQL connection string (private)
+- `JWT_SECRET`: a strong private signing secret
+- `JWT_EXPIRES_IN`: optional; defaults to `1d`
+- `FRONTEND_URL`: the exact Vercel site origin, such as `https://<your-project>.vercel.app` (no path or trailing slash)
+
+Render supplies `PORT`; the server reads it automatically. The server install generates Prisma Client. It does not apply migrations or change the database schema.
+
+Temporary accepted production audit risk (reviewed 2026-11-19): `npm audit --omit=dev` reports three high-severity findings in the `prisma`, `@prisma/config`, and `deepmerge-ts` dependency chain. The suggested automatic fix upgrades Prisma to 7.10.1, which this project does not allow. Keep Prisma at 6.19.3, do not run `npm audit fix --force`, and review the audit again for a compatible Prisma 6 fix.
+
+\#### Vercel frontend
+
+Create a Vercel project with these settings:
+
+- Root Directory: `client`
+- Build Command: `npm run build`
+- Output Directory: `dist`
+
+Set `VITE_API_URL` to the Render service URL ending in `/api`, such as `https://<your-render-service>.onrender.com/api`. Replace the placeholder with your actual Render URL. This value is public and must not contain credentials. After the first Vercel deployment, copy the exact production site origin into Render's `FRONTEND_URL` setting and redeploy the Render service so CORS allows that site.
+
+Production CORS allows only `FRONTEND_URL`. Local development also allows Vite's `http://localhost:5173` origin when `NODE_ENV` is not `production`.
+
+\### 6. Generate Prisma Client
 
 ```bash
 
@@ -361,7 +397,9 @@ npx prisma generate
 
 ```
 
-\### 6. Synchronize the Database
+\### 7. Synchronize the Database (local development only)
+
+Use this only with a local development database. It can change the target database schema. Do not run it against the existing Neon database or during deployment without explicit approval.
 
 ```bash
 
@@ -369,7 +407,7 @@ npx prisma db push
 
 ```
 
-\### 7. Run the Application
+\### 8. Run the Application
 
 Run the backend and frontend in separate terminals from the repository root:
 

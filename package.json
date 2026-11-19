@@ -8,6 +8,6 @@
     "preview": "npm --prefix client run preview -- --host 0.0.0.0"
   },
   "dependencies": {
-    "@prisma/client": "^7.10.1"
+    "@prisma/client": "6.19.3"
   }
 }

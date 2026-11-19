@@ -15,7 +15,22 @@ const insightsRoutes = require("./routes/insights.routes");
 
 const app = express();
 
-app.use(cors());
+const allowedOrigins = new Set(
+  [
+    process.env.FRONTEND_URL,
+    ...(process.env.NODE_ENV === "production"
+      ? []
+      : ["http://localhost:5173"]),
+  ].filter(Boolean)
+);
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      callback(null, Boolean(origin && allowedOrigins.has(origin)));
+    },
+  })
+);
 app.use(express.json());
 
 // API ROUTES
